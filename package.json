@@ -1,0 +1,42 @@
+{
+  "name": "mcplint",
+  "version": "0.1.0",
+  "description": "Lighthouse for MCP servers — static, design-level linting for MCP tool surfaces",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "mcplint": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "docs",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:bad": "tsx src/cli.ts fixtures/bad-server.json",
+    "lint:good": "tsx src/cli.ts fixtures/good-server.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "commander": "^13.1.0",
+    "gpt-tokenizer": "^2.9.0",
+    "picocolors": "^1.1.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0"
+  }
+}
