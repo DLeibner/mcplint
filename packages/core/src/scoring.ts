@@ -1,4 +1,4 @@
-import type { Category, CategoryScores, ResolvedFinding, Rule } from "./types.js";
+import type { Category, CategoryScores, Grade, ResolvedFinding, Rule } from "./types.js";
 
 export class Scorer {
   static readonly categories: Category[] = [
@@ -9,6 +9,15 @@ export class Scorer {
     "annotations",
     "design"
   ];
+
+  /** Presentational only — never feeds back into the composite. */
+  static grade(composite: number): Grade {
+    if (composite >= 90) return "A";
+    if (composite >= 80) return "B";
+    if (composite >= 70) return "C";
+    if (composite >= 60) return "D";
+    return "F";
+  }
 
   constructor(private readonly rules: Rule[]) {}
 

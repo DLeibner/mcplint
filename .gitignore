@@ -3,9 +3,18 @@ dist/
 *.tsbuildinfo
 .DS_Store
 
+# Next.js
+.next/
+.vercel/
+next-env.d.ts
+
+# Env
+.env
+.env*.local
+
 # Private fixtures (customer/production snapshots) — never publish
-fixtures/private/*
-!fixtures/private/.gitkeep
+**/fixtures/private/*
+!**/fixtures/private/.gitkeep
 
 # Private audit output
 report/

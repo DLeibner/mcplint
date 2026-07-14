@@ -1,94 +1,47 @@
 # mcplint
 
-**Lighthouse for MCP servers.** A local-first, static linter for [Model Context Protocol](https://modelcontextprotocol.io) tool surfaces — deterministic, fast, free, and offline. No LLM calls, ever.
+Static, design-level linting for MCP tool surfaces. Deterministic, offline, and it never calls an LLM.
 
-Existing MCP linters check hygiene: "description too short", "missing schema". mcplint checks **design**: is your tool surface something an agent can actually use well?
+This is a monorepo:
 
-- **`design/overlap-cluster`** — six `get_hotel_*` tools that are really one tool with include-flags
-- **`design/crud-mirror`** — a get/create/update/delete family per noun, the fingerprint of OpenAPI autogen
-- **`design/client-directives`** — "ALWAYS RENDER RESULTS IMMEDIATELY" blocks copy-pasted across tools, with their token cost
-- **`design/confusable-params`** — `hotel_id` vs `hotelId` vs `id` across tools
-- …plus the full hygiene tier (budgets, naming, annotations, loose schemas). See the [rule catalog](docs/rules.md).
+| Package | What it is |
+| --- | --- |
+| [`packages/core`](packages/core) | The linter — 19 rules, the scoring engine, and the `mcplint` CLI. Publishable to npm. |
+| [`apps/web`](apps/web) | The hosted playground: paste a `tools/list` dump or point it at a remote MCP URL, get a score and an audit. |
 
-And one headline stat that is not a score:
-
-```
-tools/list footprint: ~11,204 tokens per conversation (64 tools)
-```
-
-That payload is injected into **every conversation** that connects your server, before the first user message.
-
-## Usage
+## Quick start
 
 ```bash
-npx mcplint --stdio "node dist/server.js"      # spawn + connect via stdio
-npx mcplint https://mcp.example.com/mcp        # streamable HTTP
-npx mcplint snapshot.json                      # offline: a saved tools/list dump
-npx mcplint --stdio "…" --dump snapshot.json   # capture a snapshot, then exit
+corepack enable pnpm
+pnpm install
+pnpm build          # builds core (the web app imports it)
+
+pnpm test           # every package
+pnpm dev            # the web app on http://localhost:3000
 ```
 
-Offline snapshots are first-class, not a fallback: they make CI trivial, work for private servers, and your schemas never leave the machine.
+The web app runs with no cloud accounts configured: reports are held in memory, rate limiting is off,
+and no analytics are sent. Copy `apps/web/.env.example` to `.env.local` to wire up the real services.
 
-### Options
-
-| Flag | Effect |
-|---|---|
-| `--json` / `--md` | machine-readable / PR-comment-friendly output |
-| `--fail-under <score>` | non-zero exit if the composite score is lower (CI gate) |
-| `--explain <ruleId>` | print a rule's rationale and docs link |
-| `--config <path>` | explicit config path (default: `./.mcplintrc.json`) |
-| `--dump <file>` | write the captured snapshot and exit |
-
-### Configuration
-
-`.mcplintrc.json`:
-
-```json
-{
-  "failUnder": 80,
-  "rules": {
-    "surface/tool-budget": { "options": { "warnAt": 15, "errorAt": 30 } },
-    "descriptions/too-short": "error",
-    "design/enum-combination-unencoded": "off"
-  }
-}
-```
-
-Each rule takes `"off"`, a severity override (`"info"` / `"warn"` / `"error"`), or `{ severity?, options? }`.
-
-## Scoring
-
-Lighthouse-style: six category scores (surface, naming, descriptions, schemas, annotations, design) from weighted, per-rule-capped deductions, averaged into one composite. Deterministic and explainable — `--explain <ruleId>` shows why any rule exists. `info` findings (including positive checks like `design/negative-guidance-present`) never deduct.
-
-Token counts use the `o200k_base` encoding via [gpt-tokenizer](https://github.com/niieani/gpt-tokenizer) and are labelled approximate — different models tokenize differently, but the order of magnitude is what matters.
-
-## Programmatic API
-
-```ts
-import { SnapshotLoader, LintEngine, RuleRegistry, ConfigLoader } from "mcplint";
-
-const snapshot = await SnapshotLoader.fromFile("snapshot.json");
-const report = new LintEngine(RuleRegistry.all(), ConfigLoader.empty()).run(snapshot);
-console.log(report.scores.composite, report.findings.length);
-```
-
-Rules are pure functions over a plain snapshot object — adding one means implementing `check(snapshot, options): Finding[]` and registering it. See [docs/rules.md](docs/rules.md).
-
-## Development
+## The CLI
 
 ```bash
-npm install
-npm test           # vitest, includes golden-report snapshots over the fixtures
-npm run build      # tsup → dist/
-npm run lint:bad   # demo run against the seeded-bad fixture
+pnpm --filter mcplint exec tsx src/cli.ts --stdio "node dist/server.js"
+pnpm --filter mcplint exec tsx src/cli.ts https://example.com/mcp
+pnpm --filter mcplint exec tsx src/cli.ts snapshot.json
 ```
 
-## Boundaries
+See [`packages/core/README.md`](packages/core/README.md) for the full CLI, config, and scoring model,
+and [`packages/core/docs/rules.md`](packages/core/docs/rules.md) for the rule catalogue.
 
-- **Static analysis only.** mcplint reads `tools/list`; it never invokes a tool.
-- **No LLM calls in the CLI.** Behavioral evaluation is a separate concern, out of scope here.
-- Snapshots under `fixtures/private/` are gitignored — put customer/production dumps there.
+## What the web app does and does not do
 
-## Status
-
-Pre-release. The name `mcplint` is a working title.
+- **Ingest** is paste-a-dump or connect-to-an-https-URL. It never spawns a process, so stdio servers
+  are a job for the CLI.
+- **Remote capture is SSRF-guarded** ([`apps/web/lib/ssrf.ts`](apps/web/lib/ssrf.ts)): https only, every
+  resolved address must be public unicast, the socket is pinned to the vetted IP so DNS rebinding
+  cannot move it, and redirects are re-validated at every hop.
+- **Reports are private by default** — an unguessable URL, `noindex`, deleted after 30 days unless the
+  owner opts them public.
+- **Everything is free.** The `GATE_FINDINGS` flag and `projectReport()` exist so a paid tier *could*
+  withhold the audit while leaving the score free. It is off, and no billing exists.

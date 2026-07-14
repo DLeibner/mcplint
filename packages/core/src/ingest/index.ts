@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
-import type { ServerSnapshot } from "../types.js";
+import type { ServerSnapshot, ToolDef } from "../types.js";
 import { snapshotFileSchema } from "./snapshot-schema.js";
 import { McpCapture } from "./mcp-capture.js";
 
@@ -18,15 +18,25 @@ export class SnapshotLoader {
     return this.fromFile(request.target);
   }
 
-  static async fromFile(path: string): Promise<ServerSnapshot> {
-    const raw = JSON.parse(await readFile(path, "utf8"));
+  /**
+   * Build a snapshot from an already-parsed `tools/list` dump. This is the entry
+   * point for callers that never touch disk (a request handler holding a pasted
+   * body); `fromFile` delegates here so both paths share one validation.
+   *
+   * Throws a `ZodError` on malformed input.
+   */
+  static fromJson(raw: unknown, source: ServerSnapshot["source"] = "file"): ServerSnapshot {
     const parsed = snapshotFileSchema.parse(raw);
     return {
       serverInfo: parsed.serverInfo,
-      tools: parsed.tools as ServerSnapshot["tools"],
+      tools: parsed.tools as ToolDef[],
       capturedAt: parsed.capturedAt ?? new Date().toISOString(),
-      source: "file"
+      source
     };
+  }
+
+  static async fromFile(path: string): Promise<ServerSnapshot> {
+    return this.fromJson(JSON.parse(await readFile(path, "utf8")), "file");
   }
 
   static async dump(snapshot: ServerSnapshot, path: string): Promise<void> {

@@ -90,3 +90,28 @@ export interface LintReport {
   };
   findings: ResolvedFinding[];
 }
+
+/**
+ * Letter grade derived from the composite. Presentational only — it is computed
+ * on demand by `Scorer.grade()` and deliberately not stored on `LintReport`, so
+ * the report payload stays the single source of truth for scoring.
+ */
+export type Grade = "A" | "B" | "C" | "D" | "F";
+
+/**
+ * Entitlement tier. Everything is "full" today; "free" exists so the eventual
+ * score-free/details-paid split is a constant change rather than a rewrite of
+ * the report pipeline. See `projectReport`.
+ */
+export type Tier = "free" | "full";
+
+export interface FindingCounts {
+  bySeverity: Record<Severity, number>;
+  byCategory: Record<Category, number>;
+}
+
+/** A `LintReport` with the findings withheld — scores and stats survive. */
+export interface ReportSummary extends Omit<LintReport, "findings"> {
+  findingCounts: FindingCounts;
+  gated: true;
+}
