@@ -26,7 +26,7 @@ export class DesignCrudMirror extends BaseRule {
   private static noun(tokens: string[]): string {
     return tokens
       .slice(1)
-      .map((t) => t.replace(/s$/, ""))
+      .map((t) => t.replace(/(?<!s)s$/, ""))
       .join("_");
   }
 
