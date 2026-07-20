@@ -1,9 +1,12 @@
 {
   "name": "mcplint-monorepo",
-  "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.13.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -11,9 +14,6 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm --filter mcplint build && pnpm -r typecheck",
-    "preversion": "node scripts/sync-version.mjs --check",
-    "version": "node scripts/sync-version.mjs && git add package.json packages/core/package.json apps/web/package.json server.json",
-    "version:check": "node scripts/sync-version.mjs --check",
     "dev": "pnpm --filter @mcplint/web dev",
     "mcplint": "pnpm --filter mcplint exec tsx src/cli.ts"
   }

@@ -6,17 +6,17 @@ the remote server metadata to the official MCP Registry. A failure stops every d
 
 ## Release order
 
-1. **Verify** — require a `v<semver>` tag on `mcp-playground-web`; check all four versions; install
-   the frozen pnpm lockfile; typecheck; run all Vitest unit/protocol tests; run Playwright Chromium;
-   build; validate `server.json`; run npm pack/publish dry runs; and save the checked package
-   tarball.
+1. **Verify** — require a `v<semver>` tag on `mcp-playground-web` that exactly matches
+   `packages/core/package.json`; install the frozen pnpm lockfile; typecheck; run all Vitest
+   unit/protocol tests; run Playwright Chromium; build; render and validate release-specific
+   `server.json` metadata; run npm pack/publish dry runs; and save both verified artifacts.
 2. **Deploy** — pull the linked Vercel production settings, build with pinned Vercel CLI 56.3.2,
    deploy the prebuilt output, and smoke-test the actual production origin.
 3. **Publish npm** — publish the verified `mcplint` tarball as public with GitHub OIDC and npm
    provenance. If that exact immutable version already exists, a rerun skips it.
-4. **Publish MCP Registry metadata** — validate `server.json`, authenticate the
-   `io.github.dleibner` namespace with GitHub OIDC, and publish it. An existing exact version is
-   skipped, so reruns never overwrite registry metadata.
+4. **Publish MCP Registry metadata** — revalidate the rendered `server.json` artifact, authenticate
+   the `io.github.dleibner` namespace with GitHub OIDC, and publish that exact artifact. An existing
+   exact version is skipped, so reruns never overwrite registry metadata.
 
 The npm and MCP Registry jobs cannot run until the production deployment and its `/`, `/install`,
 `/rules`, MCP `initialize`, `tools/list`, and snapshot `tools/call` checks have passed.
@@ -123,7 +123,7 @@ git clone --local . "$tmp/mcplint"
 cd "$tmp/mcplint"
 corepack enable
 pnpm install --frozen-lockfile
-npm version 0.0.0 --no-git-tag-version
+npm version 0.0.0 --workspace=mcplint --no-git-tag-version
 pnpm --filter mcplint build
 npm login
 npm publish ./packages/core --access public
@@ -176,16 +176,24 @@ git pull --ff-only origin mcp-playground-web
 git status --short
 ```
 
-Choose exactly one version increment. `npm version` runs the repository's synchronization script,
-updates the root package, `packages/core/package.json`, `apps/web/package.json`, and `server.json`,
-stages those generated changes, creates the version commit, and creates the `v<version>` Git tag.
-The repository `.npmrc` prevents a `package-lock.json`; pnpm remains the package manager.
+Choose exactly one version increment. npm's workspace mode updates only the publishable `mcplint`
+package. npm intentionally does not create a Git commit or tag for workspace-scoped versioning, so
+the following explicit Git commands create the conventional version commit and annotated
+`v<version>` tag. The root and web packages are private and are not versioned. `server.json` is a
+committed endpoint template; release CI replaces its version in a temporary artifact before
+validation and Registry publication.
 
 ```bash
-npm version patch
-# or: npm version minor
-# or: npm version major
+npm version patch --workspace=mcplint # or: minor / major
+version="$(node -p "require('./packages/core/package.json').version")"
+git add packages/core/package.json
+git commit -m "v${version}" -- packages/core/package.json
+git tag -a "v${version}" -m "v${version}"
 ```
+
+The repository `.npmrc` disables npm's workspace tree update because npm does not understand
+pnpm's `workspace:*` protocol, and it prevents `package-lock.json`; pnpm remains the package
+manager.
 
 Review the commit and tag, then push the branch and annotated tag together:
 
@@ -194,9 +202,10 @@ git show --stat --decorate HEAD
 git push origin mcp-playground-web --follow-tags
 ```
 
-Never create or force-move a release tag by hand. Never rerun `npm version` after a partial release;
-rerun the existing GitHub Actions workflow instead. npm and Registry exact versions are immutable
-and the workflow safely skips versions that already exist.
+Never create a release tag independently of the reviewed version commit or force-move one. Never
+rerun `npm version` after a partial release; rerun the existing GitHub Actions workflow instead.
+npm and Registry exact versions are immutable and the workflow safely skips versions that already
+exist.
 
 ## Post-release checks
 

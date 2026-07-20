@@ -1,6 +1,5 @@
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
-import { ENGINE_VERSION } from "./version";
 
 interface ServerMetadata {
   $schema: string;
@@ -23,7 +22,7 @@ describe("server.json", () => {
     expect(metadata.name).toMatch(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/);
     expect(metadata.description.length).toBeGreaterThan(0);
     expect(metadata.description.length).toBeLessThanOrEqual(100);
-    expect(metadata.version).toBe(ENGINE_VERSION);
+    expect(metadata.version).toMatch(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
     expect(metadata.repository).toMatchObject({
       url: "https://github.com/DLeibner/mcplint",
       source: "github",
