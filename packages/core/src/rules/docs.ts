@@ -10,7 +10,8 @@ export class Docs {
    * reports link to the same place.
    */
   static readonly base =
-    process.env.MCPLINT_DOCS_BASE ?? "https://mcpplaygroundonline.com/rules";
+    process.env.MCPLINT_DOCS_BASE ??
+    "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md";
 
   /** `design/crud-mirror` -> `design-crud-mirror` */
   static slug(id: string): string {
@@ -18,6 +19,11 @@ export class Docs {
   }
 
   static rule(id: string): string {
-    return `${Docs.base}#${Docs.slug(id)}`;
+    // The hosted catalogue owns stable rule-specific anchors. The repository
+    // fallback is deliberately unanchored because GitHub strips `/` from its
+    // generated Markdown heading IDs.
+    return process.env.MCPLINT_DOCS_BASE
+      ? `${Docs.base}#${Docs.slug(id)}`
+      : Docs.base;
   }
 }

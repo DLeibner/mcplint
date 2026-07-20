@@ -84,7 +84,9 @@ describe("projectReport", () => {
 describe("Docs", () => {
   it("anchors rule links on a slug the web catalogue can match", () => {
     expect(Docs.slug("design/crud-mirror")).toBe("design-crud-mirror");
-    expect(Docs.rule("design/crud-mirror")).toBe(`${Docs.base}#design-crud-mirror`);
+    expect(Docs.rule("design/crud-mirror")).toBe(
+      process.env.MCPLINT_DOCS_BASE ? `${Docs.base}#design-crud-mirror` : Docs.base
+    );
   });
 });
 

@@ -22,6 +22,8 @@ pnpm dev            # the web app on http://localhost:3000
 
 The web app runs with no cloud accounts configured: reports are held in memory, rate limiting is off,
 and no analytics are sent. Copy `apps/web/.env.example` to `.env.local` to wire up the real services.
+See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the production account, migration, publishing, and smoke-test
+checklist.
 
 ## The CLI
 
@@ -34,6 +36,17 @@ pnpm --filter mcplint exec tsx src/cli.ts snapshot.json
 See [`packages/core/README.md`](packages/core/README.md) for the full CLI, config, and scoring model,
 and [`packages/core/docs/rules.md`](packages/core/docs/rules.md) for the rule catalogue.
 
+## Hosted MCP server
+
+The web app also serves a stateless Streamable HTTP MCP endpoint at `/api/mcp`. It exposes one
+read-only tool, `check_mcp_server`, which accepts either a public HTTPS MCP URL (plus optional
+headers) or an inline `tools/list` snapshot. The result includes structured composite/category
+scores, footprint stats, and findings.
+
+Each protocol request gets a fresh MCP server and transport. Tool inputs and captured schemas are
+not written to the report store. See `/install` in the running web app for current Cursor, VS Code,
+Claude, Windsurf, and generic client configurations.
+
 ## What the web app does and does not do
 
 - **Ingest** is paste-a-dump or connect-to-an-https-URL. It never spawns a process, so stdio servers
@@ -41,7 +54,9 @@ and [`packages/core/docs/rules.md`](packages/core/docs/rules.md) for the rule ca
 - **Remote capture is SSRF-guarded** ([`apps/web/lib/ssrf.ts`](apps/web/lib/ssrf.ts)): https only, every
   resolved address must be public unicast, the socket is pinned to the vetted IP so DNS rebinding
   cannot move it, and redirects are re-validated at every hop.
-- **Reports are private by default** — an unguessable URL, `noindex`, deleted after 30 days unless the
-  owner opts them public.
+- **Reports are unlisted by default** — an unguessable URL, `noindex`, deleted after 30 days unless
+  the owner opts them public. Anyone with an unlisted URL can view it.
+- **The MCP endpoint is stateless** — unlike the interactive report workflow, it returns a report
+  directly and does not persist the input, captured schemas, or result.
 - **Everything is free.** The `GATE_FINDINGS` flag and `projectReport()` exist so a paid tier *could*
   withhold the audit while leaving the score free. It is off, and no billing exists.

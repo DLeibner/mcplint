@@ -39,6 +39,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   const ipHash = hashIp(clientIp(request));
   const limit = await checkRateLimit(parsed.data.mode, ipHash);
   if (!limit.ok) {
+    if (limit.reason === "not_configured") {
+      return NextResponse.json(
+        { error: "Remote URL audits are unavailable until production rate limiting is configured." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Rate limit reached. Try again shortly." },
       { status: 429, headers: { "Retry-After": String(Math.ceil((limit.resetAt - Date.now()) / 1000)) } }

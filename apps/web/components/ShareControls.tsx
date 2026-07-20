@@ -51,7 +51,7 @@ export function ShareControls({
         {copied ? "Copied" : "Copy link"}
       </button>
       <button className="ghost" type="button" onClick={toggle} disabled={busy}>
-        {visibility === "public" ? "Make private" : "Make public"}
+        {visibility === "public" ? "Make unlisted" : "Make public"}
       </button>
       <button className="ghost" type="button" onClick={remove} disabled={busy}>
         Delete
@@ -59,7 +59,7 @@ export function ShareControls({
       <span className="hint">
         {visibility === "public"
           ? "Public — anyone with the link can see it, and search engines may index it."
-          : "Private — only people you send the link to. Not indexed. Auto-deleted after 30 days."}
+          : "Unlisted — anyone with the link can see it. Not indexed. Auto-deleted after 30 days."}
       </span>
     </div>
   );

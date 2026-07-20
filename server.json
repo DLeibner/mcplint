@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dleibner/mcplint",
+  "title": "mcplint",
+  "description": "Statically audits MCP tool surfaces for token cost, schema quality, and design issues.",
+  "version": "0.1.0",
+  "websiteUrl": "https://mcplint.vercel.app/install",
+  "repository": {
+    "url": "https://github.com/DLeibner/mcplint",
+    "source": "github",
+    "subfolder": "apps/web"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcplint.vercel.app/api/mcp"
+    }
+  ]
+}

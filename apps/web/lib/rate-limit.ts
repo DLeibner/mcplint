@@ -38,15 +38,26 @@ export interface RateLimitResult {
   ok: boolean;
   remaining: number;
   resetAt: number;
+  reason?: "limit_reached" | "not_configured";
 }
 
 export async function checkRateLimit(
   mode: "paste" | "url",
   key: string
 ): Promise<RateLimitResult> {
-  if (!limiters) return { ok: true, remaining: Number.POSITIVE_INFINITY, resetAt: 0 };
+  if (!limiters) {
+    if (mode === "url" && process.env.NODE_ENV === "production") {
+      return { ok: false, remaining: 0, resetAt: 0, reason: "not_configured" };
+    }
+    return { ok: true, remaining: Number.POSITIVE_INFINITY, resetAt: 0 };
+  }
   const { success, remaining, reset } = await limiters[mode].limit(key);
-  return { ok: success, remaining, resetAt: reset };
+  return {
+    ok: success,
+    remaining,
+    resetAt: reset,
+    reason: success ? undefined : "limit_reached"
+  };
 }
 
 export function isRateLimitingEnabled(): boolean {

@@ -4,9 +4,7 @@ import {
   McpCapture,
   RuleRegistry,
   SnapshotLoader,
-  projectReport,
   type LintReport,
-  type ReportSummary,
   type ServerSnapshot,
   type Tier
 } from "mcplint";
@@ -100,7 +98,6 @@ export async function buildSnapshot(request: LintRequest): Promise<ServerSnapsho
 export interface LintResult {
   snapshot: ServerSnapshot;
   report: LintReport;
-  projected: LintReport | ReportSummary;
   durationMs: number;
 }
 
@@ -111,7 +108,6 @@ export async function runLint(request: LintRequest): Promise<LintResult> {
   return {
     snapshot,
     report,
-    projected: projectReport(report, currentTier()),
     durationMs: Date.now() - started
   };
 }

@@ -3,6 +3,45 @@
 import posthog from "posthog-js";
 
 let started = false;
+const CAMPAIGN_KEYS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "campaign_post",
+  "entry_surface",
+  "install_target",
+  "audit_mode"
+] as const;
+
+function campaignProperties(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const fromUrl = new URLSearchParams(window.location.search);
+  const current = Object.fromEntries(
+    CAMPAIGN_KEYS.flatMap((key) => {
+      const value = fromUrl.get(key);
+      return value ? [[key, value.slice(0, 100)]] : [];
+    })
+  );
+
+  if (Object.keys(current).length > 0) {
+    window.sessionStorage.setItem("mcplint_campaign", JSON.stringify(current));
+    return current;
+  }
+
+  try {
+    const stored = JSON.parse(
+      window.sessionStorage.getItem("mcplint_campaign") ?? "{}"
+    ) as Record<string, unknown>;
+    return Object.fromEntries(
+      CAMPAIGN_KEYS.flatMap((key) =>
+        typeof stored[key] === "string" ? [[key, stored[key] as string]] : []
+      )
+    );
+  } catch {
+    return {};
+  }
+}
 
 /**
  * PostHog, initialised lazily and only when a key is configured — so local dev
@@ -19,10 +58,11 @@ export function initAnalytics(): void {
     person_profiles: "always",
     capture_pageview: true
   });
+  posthog.register(campaignProperties());
   started = true;
 }
 
 export function track(event: string, properties?: Record<string, unknown>): void {
   if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || typeof window === "undefined") return;
-  posthog.capture(event, properties);
+  posthog.capture(event, { ...campaignProperties(), ...properties });
 }

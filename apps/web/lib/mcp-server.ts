@@ -1,0 +1,185 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Scorer, countFindings } from "mcplint";
+import { z } from "zod";
+import { checkRateLimit } from "./rate-limit";
+import { runLint, type LintRequest } from "./lint";
+import { ENGINE_VERSION } from "./version";
+
+const categoriesSchema = z.object({
+  surface: z.number().int().min(0).max(100),
+  naming: z.number().int().min(0).max(100),
+  descriptions: z.number().int().min(0).max(100),
+  schemas: z.number().int().min(0).max(100),
+  annotations: z.number().int().min(0).max(100),
+  design: z.number().int().min(0).max(100)
+});
+
+const findingSchema = z.object({
+  ruleId: z.string(),
+  toolName: z.string().optional(),
+  path: z.string().optional(),
+  message: z.string(),
+  evidence: z.string().optional(),
+  severity: z.enum(["error", "warn", "info"]),
+  category: z.enum([
+    "surface",
+    "naming",
+    "descriptions",
+    "schemas",
+    "annotations",
+    "design"
+  ]),
+  docsUrl: z.string()
+});
+
+export const checkMcpServerOutputSchema = z.object({
+  staticAnalysis: z.literal(true),
+  targetToolsInvoked: z.literal(false),
+  grade: z.enum(["A", "B", "C", "D", "F"]),
+  server: z.object({
+    name: z.string().optional(),
+    version: z.string().optional()
+  }),
+  source: z.string(),
+  stats: z.object({
+    toolCount: z.number().int().nonnegative(),
+    approxTokens: z.number().int().nonnegative(),
+    encoding: z.string()
+  }),
+  scores: z.object({
+    composite: z.number().int().min(0).max(100),
+    categories: categoriesSchema
+  }),
+  findingCounts: z.object({
+    bySeverity: z.object({
+      error: z.number().int().nonnegative(),
+      warn: z.number().int().nonnegative(),
+      info: z.number().int().nonnegative()
+    }),
+    byCategory: z.object({
+      surface: z.number().int().nonnegative(),
+      naming: z.number().int().nonnegative(),
+      descriptions: z.number().int().nonnegative(),
+      schemas: z.number().int().nonnegative(),
+      annotations: z.number().int().nonnegative(),
+      design: z.number().int().nonnegative()
+    })
+  }),
+  findings: z.array(findingSchema)
+});
+
+export type CheckMcpServerOutput = z.infer<typeof checkMcpServerOutputSchema>;
+
+const checkMcpServerInputSchema = z
+  .object({
+    url: z
+      .string()
+      .url()
+      .optional()
+      .describe("Public HTTPS Streamable HTTP MCP endpoint to inspect."),
+    headers: z
+      .record(z.string())
+      .optional()
+      .describe("Optional HTTP headers sent only while reading the remote tools/list response."),
+    snapshot: z
+      .unknown()
+      .optional()
+      .describe("A tools/list JSON response or mcplint snapshot containing a tools array.")
+  })
+  .superRefine((value, context) => {
+    const hasUrl = value.url !== undefined;
+    const hasSnapshot = value.snapshot !== undefined;
+    if (hasUrl === hasSnapshot) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Provide exactly one of url or snapshot."
+      });
+    }
+    if (value.headers && !hasUrl) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["headers"],
+        message: "headers can only be used with url."
+      });
+    }
+  });
+
+export interface McplintMcpServerOptions {
+  rateLimitKey: string;
+}
+
+function asLintRequest(input: z.infer<typeof checkMcpServerInputSchema>): LintRequest {
+  if (input.url !== undefined) {
+    return { mode: "url", url: input.url, headers: input.headers };
+  }
+  return { mode: "paste", snapshot: input.snapshot };
+}
+
+export function createMcplintMcpServer(options: McplintMcpServerOptions): McpServer {
+  const server = new McpServer({
+    name: "mcplint",
+    version: ENGINE_VERSION
+  });
+
+  server.registerTool(
+    "check_mcp_server",
+    {
+      title: "Check MCP server",
+      description:
+        "Statically audit an MCP tool surface from a public HTTPS URL or tools/list snapshot. " +
+        "Returns deterministic scores and findings without invoking any target tool or making LLM calls. " +
+        "When the user asks to check another installed MCP server, forward that server's complete " +
+        "tool definitions from client context as snapshot. If those definitions are unavailable, " +
+        "ask the user for its public endpoint or tools/list JSON instead of inventing an audit.",
+      inputSchema: checkMcpServerInputSchema,
+      outputSchema: checkMcpServerOutputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true
+      }
+    },
+    async (input) => {
+      const request = asLintRequest(input);
+      const limit = await checkRateLimit(request.mode, options.rateLimitKey);
+      if (!limit.ok) {
+        if (limit.reason === "not_configured") {
+          throw new Error(
+            "Remote URL audits are unavailable until production rate limiting is configured."
+          );
+        }
+        throw new Error("Rate limit reached. Try again shortly.");
+      }
+
+      // runLint captures only tools/list for URL inputs. The snapshot is held
+      // for this invocation and deliberately never passed to the report store.
+      const { report } = await runLint(request);
+      const output: CheckMcpServerOutput = {
+        staticAnalysis: true,
+        targetToolsInvoked: false,
+        grade: Scorer.grade(report.scores.composite),
+        server: report.server,
+        source: report.source,
+        stats: report.stats,
+        scores: report.scores,
+        findingCounts: countFindings(report.findings),
+        findings: report.findings
+      };
+
+      return {
+        content: [
+          {
+            type: "text",
+            text:
+              `Static audit complete: ${output.grade} (${output.scores.composite}/100) across ` +
+              `${output.stats.toolCount} tools (${output.stats.approxTokens} approximate tokens).`
+          }
+        ],
+        structuredContent: output
+      };
+    }
+  );
+
+  return server;
+}

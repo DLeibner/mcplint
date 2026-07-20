@@ -20,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               mcp<span>lint</span>
             </Link>
             <nav className="nav">
+              <Link href="/install">Install</Link>
               <Link href="/rules">Rules</Link>
               <a href="https://modelcontextprotocol.io" target="_blank" rel="noreferrer">
                 MCP

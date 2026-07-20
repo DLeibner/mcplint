@@ -28,22 +28,54 @@ function pinnedLookup(pinned: PinnedAddress): LookupFunction {
   }) as unknown as LookupFunction;
 }
 
-/** Abort the stream if a server tries to drown us in body bytes. */
-function capBody(body: ReadableStream<Uint8Array> | null): ReadableStream<Uint8Array> | null {
-  if (!body) return null;
+/** Abort oversized responses and release the per-request connection pool. */
+function capBody(
+  body: ReadableStream<Uint8Array> | null,
+  onDone: () => Promise<void>
+): ReadableStream<Uint8Array> | null {
+  if (!body) {
+    void onDone();
+    return null;
+  }
+  const reader = body.getReader();
   let seen = 0;
-  return body.pipeThrough(
-    new TransformStream<Uint8Array, Uint8Array>({
-      transform(chunk, controller) {
-        seen += chunk.byteLength;
-        if (seen > MAX_BODY_BYTES) {
-          controller.error(new SsrfError(`Response exceeded ${MAX_BODY_BYTES} bytes.`));
+  let released = false;
+  const release = async () => {
+    if (released) return;
+    released = true;
+    await onDone();
+  };
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+          await release();
           return;
         }
-        controller.enqueue(chunk);
+        seen += value.byteLength;
+        if (seen > MAX_BODY_BYTES) {
+          await reader.cancel();
+          controller.error(new SsrfError(`Response exceeded ${MAX_BODY_BYTES} bytes.`));
+          await release();
+          return;
+        }
+        controller.enqueue(value);
+      } catch (error) {
+        controller.error(error);
+        await release();
       }
-    })
-  );
+    },
+    async cancel(reason) {
+      try {
+        await reader.cancel(reason);
+      } finally {
+        await release();
+      }
+    }
+  });
 }
 
 function isRedirect(status: number): boolean {
@@ -75,14 +107,23 @@ export function createGuardedFetch(): typeof fetch {
         bodyTimeout: REQUEST_TIMEOUT_MS
       });
 
-      const response = await undiciFetch(url, {
-        ...(init as Parameters<typeof undiciFetch>[1]),
-        redirect: "manual",
-        dispatcher: agent
-      });
+      let response: Awaited<ReturnType<typeof undiciFetch>>;
+      try {
+        response = await undiciFetch(url, {
+          ...(init as Parameters<typeof undiciFetch>[1]),
+          redirect: "manual",
+          dispatcher: agent
+        });
+      } catch (error) {
+        await agent.close();
+        throw error;
+      }
 
       if (!isRedirect(response.status)) {
-        const body = capBody(response.body as ReadableStream<Uint8Array> | null);
+        const body = capBody(
+          response.body as ReadableStream<Uint8Array> | null,
+          async () => agent.close()
+        );
         return new Response(body, {
           status: response.status,
           statusText: response.statusText,
@@ -93,6 +134,8 @@ export function createGuardedFetch(): typeof fetch {
       // A public URL that 302s to http://169.254.169.254/ is the classic bypass.
       // Every hop goes back through the full check, from the top.
       const location = response.headers.get("location");
+      await response.body?.cancel();
+      await agent.close();
       if (!location) throw new SsrfError("Redirect without a Location header.");
       url = new URL(location, url);
     }

@@ -24,13 +24,31 @@ export default function HomePage() {
 
       <h2>It runs locally too</h2>
       <p className="lede">
-        The site is a wrapper around a CLI. For a server on stdio, or one you&apos;d rather not paste
-        anywhere, run it yourself:
+        Keep private schemas and credentials on your machine, audit stdio servers, or add a
+        deterministic quality gate to CI.
       </p>
-      <div className="panel">
-        <code style={{ fontFamily: "var(--mono)", fontSize: "0.85rem" }}>
-          npx mcplint --stdio &quot;node dist/server.js&quot;
-        </code>
+      <div className="panel command-list">
+        <code>npx mcplint --stdio &quot;node dist/server.js&quot;</code>
+        <code>npx mcplint https://example.com/mcp</code>
+        <code>npx mcplint snapshot.json --fail-under 80</code>
+      </div>
+
+      <h2>Use it from your AI client</h2>
+      <p className="lede">
+        Add the hosted, stateless MCP endpoint to Cursor, VS Code, Claude, Windsurf, or another
+        Streamable HTTP client. Then ask your agent to audit a server and turn the structured
+        findings into a concrete refactor plan.
+      </p>
+      <div className="panel cta-panel">
+        <div>
+          <strong>One tool, one boundary.</strong>
+          <p className="hint">
+            <code>check_mcp_server</code> reads the tool surface and never calls target tools.
+          </p>
+        </div>
+        <a className="button-link" href="/install">
+          Install MCP server
+        </a>
       </div>
     </main>
   );

@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const isPublic = run.visibility === "public";
   return {
     title: `${run.report.server.name ?? "MCP server"} — ${run.report.scores.composite}/100 — mcplint`,
-    // Private by default means private from crawlers too, not just from the
-    // directory. An unlisted report must never end up in a search index.
+    // Unlisted reports must stay out of search indexes. Anyone holding the
+    // unguessable URL can still view one.
     robots: isPublic ? undefined : { index: false, follow: false }
   };
 }
