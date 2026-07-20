@@ -4,6 +4,7 @@ import pc from "picocolors";
 import { ConfigLoader } from "./config.js";
 import { LintEngine } from "./engine.js";
 import { SnapshotLoader } from "./ingest/index.js";
+import { distinctId, posthog } from "./posthog.js";
 import { JsonReporter } from "./reporters/json.js";
 import { MdReporter } from "./reporters/md.js";
 import { TtyReporter } from "./reporters/tty.js";
@@ -38,6 +39,12 @@ class Cli {
     const target = program.args[0];
 
     if (options.explain) {
+      posthog.capture({
+        distinctId,
+        event: "rule_explained",
+        properties: { rule_id: options.explain },
+      });
+      await posthog.shutdown();
       Cli.explain(options.explain);
       return;
     }
@@ -46,6 +53,16 @@ class Cli {
 
     if (options.dump) {
       await SnapshotLoader.dump(snapshot, options.dump);
+      posthog.capture({
+        distinctId,
+        event: "snapshot_dumped",
+        properties: {
+          tool_count: snapshot.tools.length,
+          source: snapshot.source,
+          output_file: options.dump,
+        },
+      });
+      await posthog.shutdown();
       console.log(pc.green(`Snapshot written to ${options.dump} (${snapshot.tools.length} tools).`));
       return;
     }
@@ -53,16 +70,46 @@ class Cli {
     const config = await ConfigLoader.load(options.config);
     const report = new LintEngine(RuleRegistry.all(), config).run(snapshot);
 
+    const outputFormat = options.json ? "json" : options.md ? "md" : "tty";
     const reporter = options.json ? new JsonReporter() : options.md ? new MdReporter() : new TtyReporter();
     console.log(reporter.render(report));
 
     const failUnder = options.failUnder ?? config.failUnder;
-    if (failUnder !== undefined && report.scores.composite < failUnder) {
+    const thresholdFailed = failUnder !== undefined && report.scores.composite < failUnder;
+
+    posthog.capture({
+      distinctId,
+      event: "lint_run_completed",
+      properties: {
+        source: snapshot.source,
+        output_format: outputFormat,
+        tool_count: report.stats.toolCount,
+        approx_tokens: report.stats.approxTokens,
+        composite_score: report.scores.composite,
+        error_count: report.findings.filter((f) => f.severity === "error").length,
+        warn_count: report.findings.filter((f) => f.severity === "warn").length,
+        fail_under: failUnder,
+        threshold_failed: thresholdFailed,
+      },
+    });
+
+    if (thresholdFailed) {
+      posthog.capture({
+        distinctId,
+        event: "lint_threshold_failed",
+        properties: {
+          composite_score: report.scores.composite,
+          fail_under: failUnder,
+          source: snapshot.source,
+        },
+      });
       console.error(
         pc.red(`Composite score ${report.scores.composite} is below --fail-under ${failUnder}.`)
       );
       process.exitCode = 1;
     }
+
+    await posthog.shutdown();
   }
 
   private static explain(ruleId: string): void {
@@ -87,7 +134,16 @@ class Cli {
   }
 }
 
-Cli.main().catch((error: unknown) => {
+Cli.main().catch(async (error: unknown) => {
+  posthog.capture({
+    distinctId,
+    event: "lint_run_errored",
+    properties: {
+      error_message: error instanceof Error ? error.message : String(error),
+    },
+  });
+  posthog.captureException(error, distinctId);
+  await posthog.shutdown();
   console.error(pc.red(error instanceof Error ? error.message : String(error)));
   process.exitCode = 1;
 });

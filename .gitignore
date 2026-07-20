@@ -9,3 +9,4 @@ fixtures/private/*
 
 # Private audit output
 report/
+.env
