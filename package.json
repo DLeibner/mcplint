@@ -9,7 +9,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm --filter mcplint build && pnpm -r typecheck",
     "dev": "pnpm --filter @mcplint/web dev",
     "mcplint": "pnpm --filter mcplint exec tsx src/cli.ts"
   }
