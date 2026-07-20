@@ -4,6 +4,11 @@
   "description": "Lighthouse for MCP servers — static, design-level linting for MCP tool surfaces",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DLeibner/mcplint.git",
+    "directory": "packages/core"
+  },
   "bin": {
     "mcplint": "dist/cli.js"
   },

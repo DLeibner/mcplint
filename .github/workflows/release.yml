@@ -1,0 +1,265 @@
+name: Production release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  VERCEL_CLI_VERSION: "56.3.2"
+  NPM_CLI_VERSION: "12.0.1"
+  MCP_PUBLISHER_VERSION: "1.8.0"
+  MCP_PUBLISHER_LINUX_AMD64_SHA256: "1370446bbe74d562608e8005a6ccce02d146a661fbd78674e11cc70b9618d6cf"
+
+jobs:
+  verify:
+    name: Verify release
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag and release metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin mcp-playground-web
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/mcp-playground-web; then
+            echo "Release tags must point to commits on mcp-playground-web." >&2
+            exit 1
+          fi
+          node scripts/sync-version.mjs --check "$GITHUB_REF_NAME"
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run unit and protocol tests
+        run: pnpm test
+
+      - name: Install Chromium
+        run: pnpm --filter @mcplint/web exec playwright install --with-deps chromium
+
+      - name: Run Chromium browser tests
+        run: pnpm --filter @mcplint/web exec playwright test --project=chromium
+
+      - name: Build production artifacts
+        run: pnpm build
+
+      - name: Validate MCP Registry metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/mcp-publisher.tar.gz"
+          curl --fail --location --silent --show-error \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz" \
+            --output "$archive"
+          echo "${MCP_PUBLISHER_LINUX_AMD64_SHA256}  ${archive}" | sha256sum --check
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP" mcp-publisher
+          "$RUNNER_TEMP/mcp-publisher" validate server.json
+
+      - name: Check npm package contents
+        working-directory: packages/core
+        run: |
+          set -euo pipefail
+          npm pack --dry-run
+          npm publish --dry-run --access public
+          npm pack --pack-destination "$RUNNER_TEMP"
+
+      - name: Upload verified npm package
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcplint-${{ steps.metadata.outputs.version }}
+          path: ${{ runner.temp }}/mcplint-*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy and smoke-test production
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      PRODUCTION_ORIGIN: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Pull Vercel production settings
+        run: pnpm dlx "vercel@${VERCEL_CLI_VERSION}" pull --yes --environment=production --token "$VERCEL_TOKEN"
+
+      - name: Build with Vercel production settings
+        run: pnpm dlx "vercel@${VERCEL_CLI_VERSION}" build --prod --token "$VERCEL_TOKEN"
+
+      - name: Deploy prebuilt production artifact
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployment_url="$(pnpm dlx "vercel@${VERCEL_CLI_VERSION}" deploy --prebuilt --prod --token "$VERCEL_TOKEN")"
+          case "$deployment_url" in
+            https://*) ;;
+            *) echo "Vercel did not return a deployment URL." >&2; exit 1 ;;
+          esac
+          echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke-test actual production origin
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$PRODUCTION_ORIGIN" ]; then
+            echo "The production environment variable NEXT_PUBLIC_SITE_URL is required." >&2
+            exit 1
+          fi
+          node scripts/smoke-production.mjs "$PRODUCTION_ORIGIN"
+
+  publish-npm:
+    name: Publish npm package
+    needs:
+      - verify
+      - deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Set up Node.js and npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+
+      - name: Install trusted-publishing npm CLI
+        run: npm install --global "npm@${NPM_CLI_VERSION}"
+
+      - name: Download verified npm package
+        uses: actions/download-artifact@v4
+        with:
+          name: mcplint-${{ needs.verify.outputs.version }}
+          path: package
+
+      - name: Publish with provenance unless version exists
+        shell: bash
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          package_tarballs=(package/mcplint-*.tgz)
+          if [ "${#package_tarballs[@]}" -ne 1 ] || [ ! -f "${package_tarballs[0]}" ]; then
+            echo "Expected exactly one verified package tarball." >&2
+            exit 1
+          fi
+
+          status="$(curl --silent --show-error --output "$RUNNER_TEMP/npm-version.json" \
+            --write-out "%{http_code}" "https://registry.npmjs.org/mcplint/${VERSION}")"
+          case "$status" in
+            200)
+              echo "mcplint@${VERSION} already exists; skipping immutable npm publication."
+              ;;
+            404)
+              npm publish "${package_tarballs[0]}" --access public --provenance
+              ;;
+            *)
+              echo "npm registry version check returned HTTP ${status}; refusing to publish." >&2
+              exit 1
+              ;;
+          esac
+
+  publish-registry:
+    name: Publish MCP Registry metadata
+    needs:
+      - verify
+      - publish-npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install verified MCP publisher
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/mcp-publisher.tar.gz"
+          curl --fail --location --silent --show-error \
+            "https://github.com/modelcontextprotocol/registry/releases/download/v${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz" \
+            --output "$archive"
+          echo "${MCP_PUBLISHER_LINUX_AMD64_SHA256}  ${archive}" | sha256sum --check
+          tar --extract --gzip --file "$archive" --directory "$RUNNER_TEMP" mcp-publisher
+
+      - name: Validate MCP Registry metadata
+        run: '"$RUNNER_TEMP/mcp-publisher" validate server.json'
+
+      - name: Publish metadata unless version exists
+        shell: bash
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          server_name="$(node -e 'console.log(encodeURIComponent(JSON.parse(require("node:fs").readFileSync("server.json", "utf8")).name))')"
+          status="$(curl --silent --show-error --output "$RUNNER_TEMP/registry-version.json" \
+            --write-out "%{http_code}" \
+            "https://registry.modelcontextprotocol.io/v0.1/servers/${server_name}/versions/${VERSION}")"
+          case "$status" in
+            200)
+              echo "MCP Registry metadata for ${VERSION} already exists; skipping immutable publication."
+              ;;
+            404)
+              "$RUNNER_TEMP/mcp-publisher" login github-oidc
+              "$RUNNER_TEMP/mcp-publisher" publish server.json
+              ;;
+            *)
+              echo "MCP Registry version check returned HTTP ${status}; refusing to publish." >&2
+              exit 1
+              ;;
+          esac
