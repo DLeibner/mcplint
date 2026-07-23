@@ -70,7 +70,7 @@ Configure the Vercel project:
 - Root Directory: `apps/web`
 - Include source files outside the Root Directory: enabled
 - Framework: Next.js
-- Node.js: 22
+- Node.js: 24
 - Install Command: `cd ../.. && npm ci`
 - Build Command:
   `cd ../.. && npm run build -w mcplint && npm run build -w @mcplint/web`
