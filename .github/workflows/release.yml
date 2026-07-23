@@ -226,7 +226,8 @@ jobs:
               echo "mcplint@${VERSION} already exists; skipping immutable npm publication."
               ;;
             404)
-              npm publish "${package_tarballs[0]}" --access public --provenance
+              # npm 12 parses bare `dir/file.tgz` as GitHub shorthand (EALLOWGIT); require ./
+              npm publish "./${package_tarballs[0]}" --access public --provenance
               ;;
             *)
               echo "npm registry version check returned HTTP ${status}; refusing to publish." >&2
