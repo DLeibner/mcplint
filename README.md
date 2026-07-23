@@ -30,17 +30,36 @@ Production releases are semver Git tags (bare `X.Y.Z`, no `v` prefix — see `.n
 `main` branch:
 
 ```bash
-# Bump root, mcplint, and @mcplint/web together
-npm version patch --workspaces --include-workspace-root
+npm version patch
+# or: npm version minor
+# or: npm version major
+```
 
-# Or bump one workspace plus the root
-npm version patch -w @mcplint/web --include-workspace-root
-npm version patch -w mcplint --include-workspace-root
+That bumps the root version, runs `preversion` (`npm run typecheck`), then the `version` lifecycle
+syncs `mcplint` and `@mcplint/web` to the same semver, stages workspace `package.json` files and
+`package-lock.json`, commits, and tags. `postversion` pushes the branch and tags to `origin`.
 
+### Advanced: bump one workspace only
+
+When only the web app or CLI changed, you may want a partial bump. The default `version` hook syncs
+**all** workspaces to the root version, so partial bumps need `--ignore-scripts` and manual staging:
+
+```bash
+npm version patch -w @mcplint/web --include-workspace-root --ignore-scripts
+# or: npm version patch -w mcplint --include-workspace-root --ignore-scripts
+git add package.json apps/*/package.json packages/*/package.json package-lock.json
+git commit -m "$(node -p \"require('./package.json').version\")"
+git tag "$(node -p \"require('./package.json').version\")"
 git push origin HEAD --follow-tags
 ```
 
-Use `minor` or `major` instead of `patch` when appropriate. Full runbook: [`DEPLOYMENT.md`](DEPLOYMENT.md).
+The release tag still follows the root version; deploy always runs, and npm/Registry publication is
+skipped when `packages/core` was not bumped.
+
+`npm version` has no `--dry-run`; inspect `npm help version` or run on a throwaway clone before
+cutting a real release.
+
+Full runbook: [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
 ## The CLI
 

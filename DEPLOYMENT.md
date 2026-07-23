@@ -179,34 +179,45 @@ git status --short
 
 ### Default: bump every package and tag
 
-One command bumps the root, `mcplint`, and `@mcplint/web`, creates the version commit, and creates the
-annotated tag that triggers `.github/workflows/release.yml`:
+One command bumps the root, syncs `mcplint` and `@mcplint/web` to the same version, creates the
+version commit, tags, and pushes — triggering `.github/workflows/release.yml`:
 
 ```bash
-npm version patch --workspaces --include-workspace-root
-# or: npm version minor --workspaces --include-workspace-root
-# or: npm version major --workspaces --include-workspace-root
+npm version patch
+# or: npm version minor
+# or: npm version major
 ```
 
-This updates every `package.json`, commits, and tags `X.Y.Z` (see `.npmrc`; `tag-version-prefix` is
-empty, so tags are bare semver such as `0.1.1`, not `v0.1.1`).
+Lifecycle hooks in root `package.json`:
 
-Then push:
+- **`preversion`** — runs `npm run typecheck` before any version bump is committed.
+- **`version`** — after npm bumps the root, runs
+  `npm version "$npm_package_version" --workspaces --no-git-tag-version --allow-same-version --ignore-scripts`
+  to align every workspace with the root semver, then stages workspace `package.json` files and
+  `package-lock.json`. The nested `npm version` uses `--ignore-scripts` so the hook does not recurse.
+- **`postversion`** — `git push origin $(git rev-parse --abbrev-ref HEAD) --tags`.
 
-```bash
-git push origin HEAD --follow-tags
-```
+Tags are bare semver such as `0.1.5` (see `.npmrc`; `tag-version-prefix` is empty, not `v0.1.5`).
 
-### Optional: bump one workspace only
+`npm version` has no `--dry-run` flag; use `npm help version` or a throwaway clone to verify behavior
+before cutting a release.
+
+### Advanced: bump one workspace only
 
 When only the web app or only the CLI package changed, bump just that package plus the root. The
-release tag still follows the root version, deploy always runs, and npm/Registry publication is
+default `version` hook syncs **all** workspaces to the root version, which would also bump
+`mcplint` on a web-only release — so partial bumps must skip lifecycle scripts and finish manually.
+
+The release tag still follows the root version, deploy always runs, and npm/Registry publication is
 skipped automatically when `packages/core` was not bumped:
 
 ```bash
-npm version patch -w @mcplint/web --include-workspace-root
-# or: npm version patch -w mcplint --include-workspace-root
-# or: npm version minor|major -w @mcplint/web|mcplint --include-workspace-root
+npm version patch -w @mcplint/web --include-workspace-root --ignore-scripts
+# or: npm version patch -w mcplint --include-workspace-root --ignore-scripts
+# or: npm version minor|major -w @mcplint/web|mcplint --include-workspace-root --ignore-scripts
+git add package.json apps/*/package.json packages/*/package.json package-lock.json
+git commit -m "$(node -p \"require('./package.json').version\")"
+git tag "$(node -p \"require('./package.json').version\")"
 git push origin HEAD --follow-tags
 ```
 
