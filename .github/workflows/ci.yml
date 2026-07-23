@@ -22,29 +22,26 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Enable pnpm
-        run: corepack enable
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: npm run typecheck
 
       - name: Test
-        run: pnpm test
+        run: npm test
 
       - name: Install browser
-        run: pnpm --filter @mcplint/web exec playwright install --with-deps chromium
+        run: npm exec -w @mcplint/web -- playwright install --with-deps chromium
 
       - name: Browser smoke tests
-        run: pnpm --filter @mcplint/web test:e2e
+        run: npm run test:e2e -w @mcplint/web
 
       - name: Build
-        run: pnpm build
+        run: npm run build

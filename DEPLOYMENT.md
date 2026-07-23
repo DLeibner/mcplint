@@ -6,8 +6,8 @@ the remote server metadata to the official MCP Registry. A failure stops every d
 
 ## Release order
 
-1. **Verify** — require a `v<semver>` tag on `mcp-playground-web` that exactly matches
-   `packages/core/package.json`; install the frozen pnpm lockfile; typecheck; run all Vitest
+1. **Verify** — require a `<semver>` tag on `mcp-playground-web` that exactly matches the root
+   `package.json` version; install the frozen npm lockfile; typecheck; run all Vitest
    unit/protocol tests; run Playwright Chromium; build; render and validate release-specific
    `server.json` metadata; run npm pack/publish dry runs; and save both verified artifacts.
 2. **Deploy** — pull the linked Vercel production settings, build with pinned Vercel CLI 56.3.2,
@@ -27,7 +27,7 @@ Create a GitHub Environment named exactly `production` in `DLeibner/mcplint`:
 
 - Add a required reviewer.
 - Prevent self-review if another maintainer is available.
-- Restrict deployment tags to `v*`.
+- Restrict deployment tags to `*.*.*` (bare semver tags such as `0.1.1`, not `v0.1.1`).
 - Keep the `mcp-playground-web` branch protected and require CI before release commits are pushed.
 
 Add these **Environment secrets** to `production` (not repository variables and never committed):
@@ -56,8 +56,8 @@ A Vercel project must be imported and linked once **before** `VERCEL_ORG_ID` and
 `VERCEL_PROJECT_ID` exist. From the monorepo root:
 
 ```bash
-pnpm dlx vercel@56.3.2 login
-pnpm dlx vercel@56.3.2 link --repo
+npx vercel@56.3.2 login
+npx vercel@56.3.2 link --repo
 cat .vercel/project.json
 ```
 
@@ -71,9 +71,9 @@ Configure the Vercel project:
 - Include source files outside the Root Directory: enabled
 - Framework: Next.js
 - Node.js: 22
-- Install Command: `cd ../.. && pnpm install --frozen-lockfile`
+- Install Command: `cd ../.. && npm ci`
 - Build Command:
-  `cd ../.. && pnpm --filter mcplint build && pnpm --filter @mcplint/web build`
+  `cd ../.. && npm run build -w mcplint && npm run build -w @mcplint/web`
 - Output Directory: `.next`
 
 Configure these Vercel **Production** environment variables:
@@ -94,7 +94,7 @@ Create the Neon database and apply the checked-in schema once:
 
 ```bash
 export DATABASE_URL='the Neon connection string'
-pnpm --filter @mcplint/web db:migrate
+npm run db:migrate -w @mcplint/web
 ```
 
 Create Upstash Redis and generate independent secrets:
@@ -121,10 +121,9 @@ from a disposable copy and publish version `0.0.0`, leaving this repository at `
 tmp="$(mktemp -d)"
 git clone --local . "$tmp/mcplint"
 cd "$tmp/mcplint"
-corepack enable
-pnpm install --frozen-lockfile
-npm version 0.0.0 --workspace=mcplint --no-git-tag-version
-pnpm --filter mcplint build
+npm ci
+npm version 0.0.0 -w mcplint --no-git-tag-version
+npm run build -w mcplint
 npm login
 npm publish ./packages/core --access public
 npm deprecate mcplint@0.0.0 "Bootstrap release; use 0.1.0 or newer."
@@ -176,36 +175,49 @@ git pull --ff-only origin mcp-playground-web
 git status --short
 ```
 
-Choose exactly one version increment. npm's workspace mode updates only the publishable `mcplint`
-package. npm intentionally does not create a Git commit or tag for workspace-scoped versioning, so
-the following explicit Git commands create the conventional version commit and annotated
-`v<version>` tag. The root and web packages are private and are not versioned. `server.json` is a
-committed endpoint template; release CI replaces its version in a temporary artifact before
-validation and Registry publication.
+### Default: bump every package and tag
+
+One command bumps the root, `mcplint`, and `@mcplint/web`, creates the version commit, and creates the
+annotated tag that triggers `.github/workflows/release.yml`:
 
 ```bash
-npm version patch --workspace=mcplint # or: minor / major
-version="$(node -p "require('./packages/core/package.json').version")"
-git add packages/core/package.json
-git commit -m "v${version}" -- packages/core/package.json
-git tag -a "v${version}" -m "v${version}"
+npm version patch --workspaces --include-workspace-root
+# or: npm version minor --workspaces --include-workspace-root
+# or: npm version major --workspaces --include-workspace-root
 ```
 
-The repository `.npmrc` disables npm's workspace tree update because npm does not understand
-pnpm's `workspace:*` protocol, and it prevents `package-lock.json`; pnpm remains the package
-manager.
+This updates every `package.json`, commits, and tags `X.Y.Z` (see `.npmrc`; `tag-version-prefix` is
+empty, so tags are bare semver such as `0.1.1`, not `v0.1.1`).
 
-Review the commit and tag, then push the branch and annotated tag together:
+Then push:
+
+```bash
+git push origin HEAD --follow-tags
+```
+
+### Optional: bump one workspace only
+
+When only the web app or only the CLI package changed, bump just that package plus the root. The
+release tag still follows the root version, deploy always runs, and npm/Registry publication is
+skipped automatically when `packages/core` was not bumped:
+
+```bash
+npm version patch -w @mcplint/web --include-workspace-root
+# or: npm version patch -w mcplint --include-workspace-root
+# or: npm version minor|major -w @mcplint/web|mcplint --include-workspace-root
+git push origin HEAD --follow-tags
+```
+
+Review before pushing:
 
 ```bash
 git show --stat --decorate HEAD
-git push origin mcp-playground-web --follow-tags
+git tag --sort=-v:refname | head -n 3
 ```
 
-Never create a release tag independently of the reviewed version commit or force-move one. Never
-rerun `npm version` after a partial release; rerun the existing GitHub Actions workflow instead.
-npm and Registry exact versions are immutable and the workflow safely skips versions that already
-exist.
+Never create or force-move a release tag by hand. Never rerun a release command after a partial
+failure; rerun the existing GitHub Actions workflow instead. npm and Registry exact versions are
+immutable and the workflow safely skips versions that already exist.
 
 ## Post-release checks
 

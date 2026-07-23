@@ -3,7 +3,7 @@ name: Production release
 on:
   push:
     tags:
-      - "v*"
+      - "*.*.*"
 
 permissions:
   contents: read
@@ -26,6 +26,7 @@ jobs:
     timeout-minutes: 25
     outputs:
       version: ${{ steps.metadata.outputs.version }}
+      tag_version: ${{ steps.metadata.outputs.tag_version }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -42,39 +43,38 @@ jobs:
             echo "Release tags must point to commits on mcp-playground-web." >&2
             exit 1
           fi
+          root_version="$(node -p "require('./package.json').version")"
           core_version="$(node -p "require('./packages/core/package.json').version")"
-          if [ "$GITHUB_REF_NAME" != "v${core_version}" ]; then
-            echo "Release tag ${GITHUB_REF_NAME} does not match mcplint@${core_version}." >&2
+          if [ "$GITHUB_REF_NAME" != "${root_version}" ]; then
+            echo "Release tag ${GITHUB_REF_NAME} does not match root@${root_version}." >&2
             exit 1
           fi
           echo "version=${core_version}" >> "$GITHUB_OUTPUT"
-
-      - name: Enable pnpm
-        run: corepack enable
+          echo "tag_version=${root_version}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: npm run typecheck
 
       - name: Run unit and protocol tests
-        run: pnpm test
+        run: npm test
 
       - name: Install Chromium
-        run: pnpm --filter @mcplint/web exec playwright install --with-deps chromium
+        run: npm exec -w @mcplint/web -- playwright install --with-deps chromium
 
       - name: Run Chromium browser tests
-        run: pnpm --filter @mcplint/web exec playwright test --project=chromium
+        run: npm exec -w @mcplint/web -- playwright test --project=chromium
 
       - name: Build production artifacts
-        run: pnpm build
+        run: npm run build
 
       - name: Render and validate MCP Registry metadata
         env:
@@ -135,30 +135,27 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Enable pnpm
-        run: corepack enable
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Pull Vercel production settings
-        run: pnpm dlx "vercel@${VERCEL_CLI_VERSION}" pull --yes --environment=production --token "$VERCEL_TOKEN"
+        run: npx "vercel@${VERCEL_CLI_VERSION}" pull --yes --environment=production --token "$VERCEL_TOKEN"
 
       - name: Build with Vercel production settings
-        run: pnpm dlx "vercel@${VERCEL_CLI_VERSION}" build --prod --token "$VERCEL_TOKEN"
+        run: npx "vercel@${VERCEL_CLI_VERSION}" build --prod --token "$VERCEL_TOKEN"
 
       - name: Deploy prebuilt production artifact
         id: deploy
         shell: bash
         run: |
           set -euo pipefail
-          deployment_url="$(pnpm dlx "vercel@${VERCEL_CLI_VERSION}" deploy --prebuilt --prod --token "$VERCEL_TOKEN")"
+          deployment_url="$(npx "vercel@${VERCEL_CLI_VERSION}" deploy --prebuilt --prod --token "$VERCEL_TOKEN")"
           case "$deployment_url" in
             https://*) ;;
             *) echo "Vercel did not return a deployment URL." >&2; exit 1 ;;
@@ -206,8 +203,13 @@ jobs:
         shell: bash
         env:
           VERSION: ${{ needs.verify.outputs.version }}
+          TAG_VERSION: ${{ needs.verify.outputs.tag_version }}
         run: |
           set -euo pipefail
+          if [ "$VERSION" != "$TAG_VERSION" ]; then
+            echo "mcplint@${VERSION} was not bumped for tag ${TAG_VERSION}; skipping npm publication."
+            exit 0
+          fi
           package_tarballs=(package/mcplint-*.tgz)
           if [ "${#package_tarballs[@]}" -ne 1 ] || [ ! -f "${package_tarballs[0]}" ]; then
             echo "Expected exactly one verified package tarball." >&2
@@ -265,8 +267,13 @@ jobs:
         shell: bash
         env:
           VERSION: ${{ needs.verify.outputs.version }}
+          TAG_VERSION: ${{ needs.verify.outputs.tag_version }}
         run: |
           set -euo pipefail
+          if [ "$VERSION" != "$TAG_VERSION" ]; then
+            echo "mcplint@${VERSION} was not bumped for tag ${TAG_VERSION}; skipping MCP Registry publication."
+            exit 0
+          fi
           metadata_version="$(node -e 'console.log(JSON.parse(require("node:fs").readFileSync("release/server.json", "utf8")).version)')"
           if [ "$metadata_version" != "$VERSION" ]; then
             echo "Registry metadata is ${metadata_version}, expected ${VERSION}; refusing to publish." >&2

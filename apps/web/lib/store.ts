@@ -59,7 +59,7 @@ function findingCountRows(id: string, report: LintReport) {
  * Persistence for lint runs.
  *
  * Falls back to an in-memory map when `DATABASE_URL` is unset so the app runs
- * with `pnpm dev` and no cloud account. Anything written this way disappears on
+ * with `npm run dev` and no cloud account. Anything written this way disappears on
  * restart, which is exactly what you want locally and never what you want in prod.
  */
 export interface Store {

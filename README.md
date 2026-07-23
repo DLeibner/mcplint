@@ -12,12 +12,11 @@ This is a monorepo:
 ## Quick start
 
 ```bash
-corepack enable pnpm
-pnpm install
-pnpm build          # builds core (the web app imports it)
+npm install
+npm run build          # builds core (the web app imports it)
 
-pnpm test           # every package
-pnpm dev            # the web app on http://localhost:3000
+npm test               # every package
+npm run dev            # the web app on http://localhost:3000
 ```
 
 The web app runs with no cloud accounts configured: reports are held in memory, rate limiting is off,
@@ -25,12 +24,30 @@ and no analytics are sent. Copy `apps/web/.env.example` to `.env.local` to wire 
 See [`DEPLOYMENT.md`](DEPLOYMENT.md) for the production account, migration, publishing, and smoke-test
 checklist.
 
+## Releases
+
+Production releases are semver Git tags (bare `X.Y.Z`, no `v` prefix — see `.npmrc`). From a clean
+`mcp-playground-web` branch:
+
+```bash
+# Bump root, mcplint, and @mcplint/web together
+npm version patch --workspaces --include-workspace-root
+
+# Or bump one workspace plus the root
+npm version patch -w @mcplint/web --include-workspace-root
+npm version patch -w mcplint --include-workspace-root
+
+git push origin HEAD --follow-tags
+```
+
+Use `minor` or `major` instead of `patch` when appropriate. Full runbook: [`DEPLOYMENT.md`](DEPLOYMENT.md).
+
 ## The CLI
 
 ```bash
-pnpm --filter mcplint exec tsx src/cli.ts --stdio "node dist/server.js"
-pnpm --filter mcplint exec tsx src/cli.ts https://example.com/mcp
-pnpm --filter mcplint exec tsx src/cli.ts snapshot.json
+npm run mcplint -- --stdio "node dist/server.js"
+npm run mcplint -- https://example.com/mcp
+npm run mcplint -- snapshot.json
 ```
 
 See [`packages/core/README.md`](packages/core/README.md) for the full CLI, config, and scoring model,

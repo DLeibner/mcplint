@@ -1,8 +1,8 @@
 {
   "name": "mcplint-monorepo",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.13.0",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -11,10 +11,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "typecheck": "pnpm --filter mcplint build && pnpm -r typecheck",
-    "dev": "pnpm --filter @mcplint/web dev",
-    "mcplint": "pnpm --filter mcplint exec tsx src/cli.ts"
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run build -w mcplint && npm run typecheck --workspaces --if-present",
+    "dev": "npm run dev -w @mcplint/web",
+    "mcplint": "npm exec -w mcplint -- tsx src/cli.ts"
   }
 }

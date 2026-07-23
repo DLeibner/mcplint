@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "web",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@mcplint/web", "dev"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "@mcplint/web"],
       "port": 3000
     }
   ]
