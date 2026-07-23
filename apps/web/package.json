@@ -1,0 +1,41 @@
+{
+  "name": "@mcplint/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@neondatabase/serverless": "^1.0.0",
+    "@upstash/ratelimit": "^2.0.5",
+    "@upstash/redis": "^1.34.3",
+    "drizzle-orm": "^0.40.1",
+    "ipaddr.js": "^2.2.0",
+    "mcplint": "*",
+    "nanoid": "^5.0.9",
+    "next": "^15.1.0",
+    "posthog-js": "^1.203.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "undici": "^7.2.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.30.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0"
+  }
+}

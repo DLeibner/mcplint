@@ -3,9 +3,21 @@ dist/
 *.tsbuildinfo
 .DS_Store
 
-# Private fixtures (customer/production snapshots) — never publish
-fixtures/private/*
-!fixtures/private/.gitkeep
+# Next.js
+.next/
+.vercel/
+next-env.d.ts
+**/test-results/
+**/playwright-report/
 
-# Private audit output
-report/
+# Env
+.env
+.env*.local
+
+# Private fixtures (customer/production snapshots) — never publish
+**/fixtures/private/*
+!**/fixtures/private/.gitkeep
+
+# Private audit output at the repository root. Keep application routes named
+# `report` trackable (for example apps/web/app/api/report).
+/report/
