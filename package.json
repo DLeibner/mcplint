@@ -15,6 +15,7 @@
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run build -w mcplint && npm run typecheck --workspaces --if-present",
     "dev": "npm run dev -w @mcplint/web",
-    "mcplint": "npm exec -w mcplint -- tsx src/cli.ts"
+    "mcplint": "npm exec -w mcplint -- tsx src/cli.ts",
+    "postversion": "git push origin $(git rev-parse --abbrev-ref HEAD) --tags"
   }
 }
