@@ -31,7 +31,7 @@ describe("server.json", () => {
     expect(metadata.remotes).toEqual([
       {
         type: "streamable-http",
-        url: "https://mcplint.vercel.app/api/mcp"
+        url: "https://mcplint-web.vercel.app/api/mcp"
       }
     ]);
   });

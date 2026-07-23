@@ -42,7 +42,7 @@ Add this **Environment variable**:
 
 | Name | Value |
 | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | The canonical HTTPS production origin, currently `https://mcplint.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | The canonical HTTPS production origin, currently `https://mcplint-web.vercel.app` |
 
 `NEXT_PUBLIC_SITE_URL` must be an origin only: no path, query, fragment, or trailing route. The
 release smoke test also requires `server.json` to advertise this same origin.
@@ -79,7 +79,7 @@ Configure the Vercel project:
 Configure these Vercel **Production** environment variables:
 
 ```text
-NEXT_PUBLIC_SITE_URL=https://mcplint.vercel.app
+NEXT_PUBLIC_SITE_URL=https://mcplint-web.vercel.app
 DATABASE_URL=...
 UPSTASH_REDIS_REST_URL=...
 UPSTASH_REDIS_REST_TOKEN=...
@@ -108,8 +108,10 @@ Remote URL audits intentionally fail closed without Upstash. Report persistence 
 memory without Neon and is not durable. Apply future production database migrations before tagging
 a release; the release workflow deliberately does not mutate the database.
 
-The CLI workflow performs the production deployment. Disable automatic Vercel Git production
-deployments if they would create a second, unverified production path.
+The CLI workflow performs the production deployment. Git auto-deploy is disabled in
+`apps/web/vercel.json` (`"git": { "deploymentEnabled": false }`) so pushes do not create a second,
+unverified production path. The Vercel UI toggle for this varies by plan; the checked-in config is
+the source of truth.
 
 ## One-time npm setup
 

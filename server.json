@@ -4,7 +4,7 @@
   "title": "mcplint",
   "description": "Statically audits MCP tool surfaces for token cost, schema quality, and design issues.",
   "version": "0.1.0",
-  "websiteUrl": "https://mcplint.vercel.app/install",
+  "websiteUrl": "https://mcplint-web.vercel.app/install",
   "repository": {
     "url": "https://github.com/DLeibner/mcplint",
     "source": "github",
@@ -13,7 +13,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://mcplint.vercel.app/api/mcp"
+      "url": "https://mcplint-web.vercel.app/api/mcp"
     }
   ]
 }
