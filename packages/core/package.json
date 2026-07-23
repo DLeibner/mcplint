@@ -1,6 +1,6 @@
 {
   "name": "mcplint",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Lighthouse for MCP servers — static, design-level linting for MCP tool surfaces",
   "license": "MIT",
   "type": "module",
