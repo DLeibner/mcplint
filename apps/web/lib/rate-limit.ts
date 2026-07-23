@@ -9,8 +9,9 @@ import { Redis } from "@upstash/redis";
  * at a victim of the caller's choosing. `paste` mode touches nobody else's
  * network, so it only needs to be bounded against CPU abuse.
  *
- * With no Upstash credentials configured (local dev), limiting is disabled
- * rather than failing closed — a dev machine is not a public amplifier.
+ * With no Upstash credentials configured, limiting is disabled in local dev.
+ * In production we fail closed for both modes — unbounded paste linting is
+ * still CPU-heavy and persisted to the report store.
  */
 const configured =
   Boolean(process.env.UPSTASH_REDIS_REST_URL) && Boolean(process.env.UPSTASH_REDIS_REST_TOKEN);
@@ -46,7 +47,7 @@ export async function checkRateLimit(
   key: string
 ): Promise<RateLimitResult> {
   if (!limiters) {
-    if (mode === "url" && process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production") {
       return { ok: false, remaining: 0, resetAt: 0, reason: "not_configured" };
     }
     return { ok: true, remaining: Number.POSITIVE_INFINITY, resetAt: 0 };

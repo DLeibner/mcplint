@@ -9,8 +9,12 @@ type Params = { params: Promise<{ id: string }> };
 
 function ownerToken(request: Request, id: string): string | undefined {
   const cookie = request.headers.get("cookie") ?? "";
-  const match = cookie.match(new RegExp(`mcplint_owner_${id}=([^;]+)`));
-  return match?.[1];
+  const target = `mcplint_owner_${id}=`;
+  for (const part of cookie.split(";")) {
+    const trimmed = part.trim();
+    if (trimmed.startsWith(target)) return trimmed.slice(target.length);
+  }
+  return undefined;
 }
 
 export async function GET(request: Request, { params }: Params): Promise<NextResponse> {

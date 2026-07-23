@@ -70,39 +70,35 @@ export const checkMcpServerOutputSchema = z.object({
 
 export type CheckMcpServerOutput = z.infer<typeof checkMcpServerOutputSchema>;
 
-const checkMcpServerInputSchema = z
-  .object({
-    url: z
-      .string()
-      .url()
-      .optional()
-      .describe("Public HTTPS Streamable HTTP MCP endpoint to inspect."),
-    headers: z
-      .record(z.string())
-      .optional()
-      .describe("Optional HTTP headers sent only while reading the remote tools/list response."),
-    snapshot: z
-      .unknown()
-      .optional()
-      .describe("A tools/list JSON response or mcplint snapshot containing a tools array.")
-  })
-  .superRefine((value, context) => {
-    const hasUrl = value.url !== undefined;
-    const hasSnapshot = value.snapshot !== undefined;
-    if (hasUrl === hasSnapshot) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Provide exactly one of url or snapshot."
-      });
-    }
-    if (value.headers && !hasUrl) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["headers"],
-        message: "headers can only be used with url."
-      });
-    }
-  });
+const checkMcpServerInputSchema = z.object({
+  url: z
+    .string()
+    .url()
+    .optional()
+    .describe("Public HTTPS Streamable HTTP MCP endpoint to inspect."),
+  headers: z
+    .record(z.string())
+    .optional()
+    .describe("Optional HTTP headers sent only while reading the remote tools/list response."),
+  snapshot: z
+    .unknown()
+    .optional()
+    .describe("A tools/list JSON response or mcplint snapshot containing a tools array.")
+});
+
+function validateCheckMcpServerInput(
+  input: z.infer<typeof checkMcpServerInputSchema>
+): string | undefined {
+  const hasUrl = input.url !== undefined;
+  const hasSnapshot = input.snapshot !== undefined;
+  if (hasUrl === hasSnapshot) {
+    return "Provide exactly one of url or snapshot.";
+  }
+  if (input.headers && !hasUrl) {
+    return "headers can only be used with url.";
+  }
+  return undefined;
+}
 
 export interface McplintMcpServerOptions {
   rateLimitKey: string;
@@ -141,12 +137,17 @@ export function createMcplintMcpServer(options: McplintMcpServerOptions): McpSer
       }
     },
     async (input) => {
+      const validationError = validateCheckMcpServerInput(input);
+      if (validationError) {
+        throw new Error(validationError);
+      }
+
       const request = asLintRequest(input);
       const limit = await checkRateLimit(request.mode, options.rateLimitKey);
       if (!limit.ok) {
         if (limit.reason === "not_configured") {
           throw new Error(
-            "Remote URL audits are unavailable until production rate limiting is configured."
+            "Audits are unavailable until production rate limiting is configured."
           );
         }
         throw new Error("Rate limit reached. Try again shortly.");

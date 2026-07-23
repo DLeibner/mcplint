@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!limit.ok) {
     if (limit.reason === "not_configured") {
       return NextResponse.json(
-        { error: "Remote URL audits are unavailable until production rate limiting is configured." },
+        { error: "Audits are unavailable until production rate limiting is configured." },
         { status: 503 }
       );
     }
