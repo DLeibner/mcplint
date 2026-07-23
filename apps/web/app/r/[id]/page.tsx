@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { projectReport } from "mcplint";
+import { projectReport } from "mcp-surface-lint";
 import { ReportView } from "@/components/ReportView";
 import { ShareControls } from "@/components/ShareControls";
 import { AuditCta } from "@/components/AuditCta";

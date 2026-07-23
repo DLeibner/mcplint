@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { projectReport } from "mcplint";
+import { projectReport } from "mcp-surface-lint";
 import { currentTier } from "@/lib/lint";
 import { getStore, type Visibility } from "@/lib/store";
 

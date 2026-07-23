@@ -20,7 +20,7 @@
     "@upstash/redis": "^1.34.3",
     "drizzle-orm": "^0.40.1",
     "ipaddr.js": "^2.2.0",
-    "mcplint": "*",
+    "mcp-surface-lint": "*",
     "nanoid": "^5.0.9",
     "next": "^15.1.0",
     "posthog-js": "^1.203.0",

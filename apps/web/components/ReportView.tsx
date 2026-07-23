@@ -1,4 +1,4 @@
-import { Scorer, isGated, type LintReport, type ReportSummary, type Severity } from "mcplint";
+import { Scorer, isGated, type LintReport, type ReportSummary, type Severity } from "mcp-surface-lint";
 
 const SEVERITY_ORDER: Severity[] = ["error", "warn", "info"];
 

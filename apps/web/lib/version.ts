@@ -1,4 +1,4 @@
-import pkg from "mcplint/package.json" with { type: "json" };
+import pkg from "mcp-surface-lint/package.json" with { type: "json" };
 
 /**
  * The engine that produced a given score. Stored on every run: when a rule's

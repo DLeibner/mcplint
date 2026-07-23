@@ -10,10 +10,10 @@ const siteOrigin =
     : "http://localhost:3000");
 
 const config: NextConfig = {
-  // `mcplint` is a workspace source package, and the MCP SDK it pulls in is
+  // `mcp-surface-lint` is a workspace source package, and the MCP SDK it pulls in is
   // Node-only. Keep both out of the client bundle and let Next transpile the
   // workspace package rather than treating it as a prebuilt dep.
-  transpilePackages: ["mcplint"],
+  transpilePackages: ["mcp-surface-lint"],
   serverExternalPackages: ["@modelcontextprotocol/sdk", "gpt-tokenizer", "undici"],
   outputFileTracingRoot: path.resolve(appRoot, "../.."),
   env: {

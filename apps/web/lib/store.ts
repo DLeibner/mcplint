@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { and, eq, sql } from "drizzle-orm";
-import type { LintReport, ServerSnapshot } from "mcplint";
+import type { LintReport, ServerSnapshot } from "mcp-surface-lint";
 import { runFindings, runs } from "./db/schema";
 import { getDb } from "./db/client";
 

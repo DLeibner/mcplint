@@ -12,7 +12,7 @@ the remote server metadata to the official MCP Registry. A failure stops every d
    `server.json` metadata; run npm pack/publish dry runs; and save both verified artifacts.
 2. **Deploy** — pull the linked Vercel production settings, build with pinned Vercel CLI 56.3.2,
    deploy the prebuilt output, and smoke-test the actual production origin.
-3. **Publish npm** — publish the verified `mcplint` tarball as public with GitHub OIDC and npm
+3. **Publish npm** — publish the verified `mcp-surface-lint` tarball as public with GitHub OIDC and npm
    provenance. If that exact immutable version already exists, a rerun skips it.
 4. **Publish MCP Registry metadata** — revalidate the rendered `server.json` artifact, authenticate
    the `io.github.dleibner` namespace with GitHub OIDC, and publish that exact artifact. An existing
@@ -73,7 +73,7 @@ Configure the Vercel project:
 - Node.js: 24
 - Install Command: `cd ../.. && npm ci`
 - Build Command:
-  `cd ../.. && npm run build -w mcplint && npm run build -w @mcplint/web`
+  `cd ../.. && npm run build -w mcp-surface-lint && npm run build -w @mcplint/web`
 - Output Directory: `.next`
 
 Configure these Vercel **Production** environment variables:
@@ -115,7 +115,7 @@ the source of truth.
 
 ## One-time npm setup
 
-The package `mcplint` does not yet exist on npm. npm cannot attach a Trusted Publisher to a package
+The package `mcp-surface-lint` does not yet exist on npm. npm cannot attach a Trusted Publisher to a package
 until a package record exists, so a one-time interactive bootstrap publish is unavoidable. Do this
 from a disposable copy and publish version `0.0.0`, leaving this repository at `0.1.0`:
 
@@ -124,11 +124,11 @@ tmp="$(mktemp -d)"
 git clone --local . "$tmp/mcplint"
 cd "$tmp/mcplint"
 npm ci
-npm version 0.0.0 -w mcplint --no-git-tag-version
-npm run build -w mcplint
+npm version 0.0.0 -w mcp-surface-lint --no-git-tag-version
+npm run build -w mcp-surface-lint
 npm login
 npm publish ./packages/core --access public
-npm deprecate mcplint@0.0.0 "Bootstrap release; use 0.1.0 or newer."
+npm deprecate mcp-surface-lint@0.0.0 "Bootstrap release; use 0.1.0 or newer."
 npm logout
 cd -
 rm -rf "$tmp"
@@ -137,7 +137,7 @@ rm -rf "$tmp"
 This uses an interactive npm session, not a long-lived CI token. Confirm the package owner is the
 npm account that will administer releases.
 
-Then open the `mcplint` package settings on npmjs.com and configure its one Trusted Publisher:
+Then open the `mcp-surface-lint` package settings on npmjs.com and configure its one Trusted Publisher:
 
 - Provider: GitHub Actions
 - Organization or user: `DLeibner`
@@ -179,7 +179,7 @@ git status --short
 
 ### Default: bump every package and tag
 
-One command bumps the root, syncs `mcplint` and `@mcplint/web` to the same version, creates the
+One command bumps the root, syncs `mcp-surface-lint` and `@mcplint/web` to the same version, creates the
 version commit, tags, and pushes — triggering `.github/workflows/release.yml`:
 
 ```bash
@@ -206,15 +206,15 @@ before cutting a release.
 
 When only the web app or only the CLI package changed, bump just that package plus the root. The
 default `version` hook syncs **all** workspaces to the root version, which would also bump
-`mcplint` on a web-only release — so partial bumps must skip lifecycle scripts and finish manually.
+`mcp-surface-lint` on a web-only release — so partial bumps must skip lifecycle scripts and finish manually.
 
 The release tag still follows the root version, deploy always runs, and npm/Registry publication is
 skipped automatically when `packages/core` was not bumped:
 
 ```bash
 npm version patch -w @mcplint/web --include-workspace-root --ignore-scripts
-# or: npm version patch -w mcplint --include-workspace-root --ignore-scripts
-# or: npm version minor|major -w @mcplint/web|mcplint --include-workspace-root --ignore-scripts
+# or: npm version patch -w mcp-surface-lint --include-workspace-root --ignore-scripts
+# or: npm version minor|major -w @mcplint/web|mcp-surface-lint --include-workspace-root --ignore-scripts
 git add package.json apps/*/package.json packages/*/package.json package-lock.json
 git commit -m "$(node -p \"require('./package.json').version\")"
 git tag "$(node -p \"require('./package.json').version\")"
@@ -237,8 +237,8 @@ immutable and the workflow safely skips versions that already exist.
 The workflow performs automated route and MCP protocol smoke tests. After it succeeds:
 
 ```bash
-npx mcplint@<version> --help
-npx mcplint@<version> /path/to/a-sanitised-snapshot.json
+npx mcp-surface-lint@<version> --help
+npx mcp-surface-lint@<version> /path/to/a-sanitised-snapshot.json
 ```
 
 Also confirm the npm package page shows provenance, the Vercel production alias targets the new

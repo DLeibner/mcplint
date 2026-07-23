@@ -64,7 +64,7 @@ export default function InstallPage() {
         sensitive credentials, use the local CLI instead.
       </p>
       <div className="panel">
-        <code className="command">npx mcplint --stdio &quot;node dist/server.js&quot;</code>
+        <code className="command">npx mcp-surface-lint --stdio &quot;node dist/server.js&quot;</code>
       </div>
     </main>
   );

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Docs, RuleRegistry, Scorer, type Category } from "mcplint";
+import { Docs, RuleRegistry, Scorer, type Category } from "mcp-surface-lint";
 
 export const metadata: Metadata = {
   title: "Rules — mcplint",

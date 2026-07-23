@@ -112,9 +112,9 @@ jobs:
       - name: Upload verified release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mcplint-${{ steps.metadata.outputs.version }}
+          name: mcp-surface-lint-${{ steps.metadata.outputs.version }}
           path: |
-            ${{ runner.temp }}/mcplint-*.tgz
+            ${{ runner.temp }}/mcp-surface-lint-*.tgz
             ${{ runner.temp }}/server.json
           if-no-files-found: error
           retention-days: 7
@@ -199,7 +199,7 @@ jobs:
       - name: Download verified npm package
         uses: actions/download-artifact@v4
         with:
-          name: mcplint-${{ needs.verify.outputs.version }}
+          name: mcp-surface-lint-${{ needs.verify.outputs.version }}
           path: package
 
       - name: Publish with provenance unless version exists
@@ -210,20 +210,20 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$VERSION" != "$TAG_VERSION" ]; then
-            echo "mcplint@${VERSION} was not bumped for tag ${TAG_VERSION}; skipping npm publication."
+            echo "mcp-surface-lint@${VERSION} was not bumped for tag ${TAG_VERSION}; skipping npm publication."
             exit 0
           fi
-          package_tarballs=(package/mcplint-*.tgz)
+          package_tarballs=(package/mcp-surface-lint-*.tgz)
           if [ "${#package_tarballs[@]}" -ne 1 ] || [ ! -f "${package_tarballs[0]}" ]; then
             echo "Expected exactly one verified package tarball." >&2
             exit 1
           fi
 
           status="$(curl --silent --show-error --output "$RUNNER_TEMP/npm-version.json" \
-            --write-out "%{http_code}" "https://registry.npmjs.org/mcplint/${VERSION}")"
+            --write-out "%{http_code}" "https://registry.npmjs.org/mcp-surface-lint/${VERSION}")"
           case "$status" in
             200)
-              echo "mcplint@${VERSION} already exists; skipping immutable npm publication."
+              echo "mcp-surface-lint@${VERSION} already exists; skipping immutable npm publication."
               ;;
             404)
               # npm 12 parses bare `dir/file.tgz` as GitHub shorthand (EALLOWGIT); require ./
@@ -250,7 +250,7 @@ jobs:
       - name: Download verified release artifacts
         uses: actions/download-artifact@v4
         with:
-          name: mcplint-${{ needs.verify.outputs.version }}
+          name: mcp-surface-lint-${{ needs.verify.outputs.version }}
           path: release
 
       - name: Install verified MCP publisher
@@ -275,7 +275,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$VERSION" != "$TAG_VERSION" ]; then
-            echo "mcplint@${VERSION} was not bumped for tag ${TAG_VERSION}; skipping MCP Registry publication."
+            echo "mcp-surface-lint@${VERSION} was not bumped for tag ${TAG_VERSION}; skipping MCP Registry publication."
             exit 0
           fi
           metadata_version="$(node -e 'console.log(JSON.parse(require("node:fs").readFileSync("release/server.json", "utf8")).version)')"

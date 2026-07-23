@@ -28,9 +28,9 @@ export default function HomePage() {
         deterministic quality gate to CI.
       </p>
       <div className="panel command-list">
-        <code>npx mcplint --stdio &quot;node dist/server.js&quot;</code>
-        <code>npx mcplint https://example.com/mcp</code>
-        <code>npx mcplint snapshot.json --fail-under 80</code>
+        <code>npx mcp-surface-lint --stdio &quot;node dist/server.js&quot;</code>
+        <code>npx mcp-surface-lint https://example.com/mcp</code>
+        <code>npx mcp-surface-lint snapshot.json --fail-under 80</code>
       </div>
 
       <h2>Use it from your AI client</h2>

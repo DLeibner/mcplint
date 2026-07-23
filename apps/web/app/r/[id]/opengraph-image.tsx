@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { Scorer } from "mcplint";
+import { Scorer } from "mcp-surface-lint";
 import { getStore } from "@/lib/store";
 
 export const runtime = "nodejs";

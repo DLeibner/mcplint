@@ -21,10 +21,10 @@ That payload is injected into **every conversation** that connects your server, 
 ## Usage
 
 ```bash
-npx mcplint --stdio "node dist/server.js"      # spawn + connect via stdio
-npx mcplint https://mcp.example.com/mcp        # streamable HTTP
-npx mcplint snapshot.json                      # offline: a saved tools/list dump
-npx mcplint --stdio "…" --dump snapshot.json   # capture a snapshot, then exit
+npx mcp-surface-lint --stdio "node dist/server.js"      # spawn + connect via stdio
+npx mcp-surface-lint https://mcp.example.com/mcp        # streamable HTTP
+npx mcp-surface-lint snapshot.json                      # offline: a saved tools/list dump
+npx mcp-surface-lint --stdio "…" --dump snapshot.json   # capture a snapshot, then exit
 ```
 
 Offline snapshots are first-class, not a fallback: they make CI trivial, work for private servers, and your schemas never leave the machine.
@@ -65,7 +65,7 @@ Token counts use the `o200k_base` encoding via [gpt-tokenizer](https://github.co
 ## Programmatic API
 
 ```ts
-import { SnapshotLoader, LintEngine, RuleRegistry, ConfigLoader } from "mcplint";
+import { SnapshotLoader, LintEngine, RuleRegistry, ConfigLoader } from "mcp-surface-lint";
 
 const snapshot = await SnapshotLoader.fromFile("snapshot.json");
 const report = new LintEngine(RuleRegistry.all(), ConfigLoader.empty()).run(snapshot);
@@ -91,4 +91,4 @@ npm run lint:bad   # demo run against the seeded-bad fixture
 
 ## Status
 
-Pre-release. The name `mcplint` is a working title.
+Published on npm as [`mcp-surface-lint`](https://www.npmjs.com/package/mcp-surface-lint). The CLI command remains `mcplint`.

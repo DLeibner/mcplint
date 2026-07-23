@@ -7,7 +7,7 @@ import {
   type LintReport,
   type ServerSnapshot,
   type Tier
-} from "mcplint";
+} from "mcp-surface-lint";
 import { z } from "zod";
 import { createGuardedFetch } from "./guarded-fetch";
 

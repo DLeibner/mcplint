@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { Scorer, countFindings } from "mcplint";
+import { Scorer, countFindings } from "mcp-surface-lint";
 import { z } from "zod";
 import { checkRateLimit } from "./rate-limit";
 import { runLint, type LintRequest } from "./lint";
