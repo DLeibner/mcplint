@@ -11,38 +11,66 @@ permissions:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Main pushes (including npm version bumps before tag release) must not cancel
+  # in-progress runs — cancelled checks show as failures on the commit graph.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Detect release version bump
+        id: release
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          message="${{ github.event.head_commit.message }}"
+          if [[ "$message" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Delegate verification to release workflow
+        if: steps.release.outputs.skip == 'true'
+        run: |
+          echo "Version bump commit; Production release workflow verifies this revision on tag push."
+
       - name: Check out repository
+        if: steps.release.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Set up Node.js
+        if: steps.release.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
       - name: Install dependencies
+        if: steps.release.outputs.skip != 'true'
         run: npm ci
 
       - name: Typecheck
+        if: steps.release.outputs.skip != 'true'
         run: npm run typecheck
 
       - name: Test
+        if: steps.release.outputs.skip != 'true'
         run: npm test
 
       - name: Install browser
+        if: steps.release.outputs.skip != 'true'
         run: npm exec -w @mcplint/web -- playwright install --with-deps chromium
 
       - name: Browser smoke tests
+        if: steps.release.outputs.skip != 'true'
         run: npm run test:e2e -w @mcplint/web
 
       - name: Build
+        if: steps.release.outputs.skip != 'true'
         run: npm run build
