@@ -27,7 +27,7 @@ checklist.
 ## Releases
 
 Production releases are semver Git tags (bare `X.Y.Z`, no `v` prefix — see `.npmrc`). From a clean
-`mcp-playground-web` branch:
+`main` branch:
 
 ```bash
 # Bump root, mcplint, and @mcplint/web together

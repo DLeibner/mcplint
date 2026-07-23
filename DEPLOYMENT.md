@@ -6,7 +6,7 @@ the remote server metadata to the official MCP Registry. A failure stops every d
 
 ## Release order
 
-1. **Verify** — require a `<semver>` tag on `mcp-playground-web` that exactly matches the root
+1. **Verify** — require a `<semver>` tag on `main` that exactly matches the root
    `package.json` version; install the frozen npm lockfile; typecheck; run all Vitest
    unit/protocol tests; run Playwright Chromium; build; render and validate release-specific
    `server.json` metadata; run npm pack/publish dry runs; and save both verified artifacts.
@@ -28,7 +28,7 @@ Create a GitHub Environment named exactly `production` in `DLeibner/mcplint`:
 - Add a required reviewer.
 - Prevent self-review if another maintainer is available.
 - Restrict deployment tags to `*.*.*` (bare semver tags such as `0.1.1`, not `v0.1.1`).
-- Keep the `mcp-playground-web` branch protected and require CI before release commits are pushed.
+- Keep the `main` branch protected and require CI before release commits are pushed.
 
 Add these **Environment secrets** to `production` (not repository variables and never committed):
 
@@ -172,8 +172,8 @@ next release. Registry publication is downstream of both the live endpoint smoke
 Start clean and up to date on the release branch:
 
 ```bash
-git switch mcp-playground-web
-git pull --ff-only origin mcp-playground-web
+git switch main
+git pull --ff-only origin main
 git status --short
 ```
 

@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - mcp-playground-web
 
 permissions:
   contents: read
