@@ -13,13 +13,32 @@ import { Redis } from "@upstash/redis";
  * In production we fail closed for both modes — unbounded paste linting is
  * still CPU-heavy and persisted to the report store.
  */
-const configured =
-  Boolean(process.env.UPSTASH_REDIS_REST_URL) && Boolean(process.env.UPSTASH_REDIS_REST_TOKEN);
+type Limiters = {
+  url: Ratelimit;
+  paste: Ratelimit;
+};
 
-const redis = configured ? Redis.fromEnv() : undefined;
+let limitersCache: Limiters | undefined | null = null;
 
-const limiters = redis
-  ? {
+function isUpstashConfigured(): boolean {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  return Boolean(url && token && url.startsWith("https://"));
+}
+
+function getLimiters(): Limiters | undefined {
+  if (limitersCache !== null) {
+    return limitersCache;
+  }
+
+  if (!isUpstashConfigured()) {
+    limitersCache = undefined;
+    return undefined;
+  }
+
+  try {
+    const redis = Redis.fromEnv();
+    limitersCache = {
       url: new Ratelimit({
         redis,
         limiter: Ratelimit.slidingWindow(10, "1 h"),
@@ -32,8 +51,14 @@ const limiters = redis
         prefix: "mcplint:paste",
         analytics: true
       })
-    }
-  : undefined;
+    };
+    return limitersCache;
+  } catch (error) {
+    console.error("Upstash Redis client init failed", error);
+    limitersCache = undefined;
+    return undefined;
+  }
+}
 
 export interface RateLimitResult {
   ok: boolean;
@@ -46,6 +71,7 @@ export async function checkRateLimit(
   mode: "paste" | "url",
   key: string
 ): Promise<RateLimitResult> {
+  const limiters = getLimiters();
   if (!limiters) {
     if (process.env.NODE_ENV === "production") {
       return { ok: false, remaining: 0, resetAt: 0, reason: "not_configured" };
@@ -62,5 +88,5 @@ export async function checkRateLimit(
 }
 
 export function isRateLimitingEnabled(): boolean {
-  return Boolean(limiters);
+  return isUpstashConfigured();
 }
