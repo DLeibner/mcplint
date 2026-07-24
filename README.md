@@ -1,4 +1,4 @@
-# mcplint
+# mcp-surface-lint
 
 Static, design-level linting for MCP tool surfaces. Deterministic, offline, and it never calls an LLM.
 
