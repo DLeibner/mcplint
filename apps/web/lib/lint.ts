@@ -9,6 +9,7 @@ import {
   type Tier
 } from "mcp-surface-lint";
 import { z } from "zod";
+import { humanizeCaptureError } from "./capture-error";
 import { createGuardedFetch } from "./guarded-fetch";
 
 export const MAX_TOOLS = 500;
@@ -19,7 +20,7 @@ export const lintRequestSchema = z.discriminatedUnion("mode", [
   z.object({ mode: z.literal("paste"), snapshot: z.unknown() }),
   z.object({
     mode: z.literal("url"),
-    url: z.string().url(),
+    url: z.string().trim().url(),
     headers: z.record(z.string()).optional()
   })
 ]);
@@ -88,10 +89,7 @@ export async function buildSnapshot(request: LintRequest): Promise<ServerSnapsho
     );
   } catch (error) {
     if (error instanceof LintError) throw error;
-    throw new LintError(
-      error instanceof Error ? error.message : "Could not connect to that MCP server.",
-      "capture_failed"
-    );
+    throw new LintError(humanizeCaptureError(error), "capture_failed");
   }
 }
 

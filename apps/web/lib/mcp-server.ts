@@ -73,6 +73,7 @@ export type CheckMcpServerOutput = z.infer<typeof checkMcpServerOutputSchema>;
 const checkMcpServerInputSchema = z.object({
   url: z
     .string()
+    .trim()
     .url()
     .optional()
     .describe("Public HTTPS Streamable HTTP MCP endpoint to inspect."),

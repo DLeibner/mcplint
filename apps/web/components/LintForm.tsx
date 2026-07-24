@@ -224,8 +224,9 @@ export function LintForm() {
           </details>
           <div className="row">
             <p className="hint">
-              https only. We connect, read <code>tools/list</code>, and disconnect — no tool is ever
-              called.
+              https only. We connect from our server (not your Cursor session), read{" "}
+              <code>tools/list</code>, and disconnect — no tool is ever called. Protected servers
+              need a Bearer token or API key in optional headers below.
             </p>
             <button className="primary" type="submit" disabled={busy || !url.trim()}>
               {busy ? "Connecting…" : "Audit surface"}
