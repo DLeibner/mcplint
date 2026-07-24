@@ -187,11 +187,12 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Set up Node.js and npm registry
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: https://registry.npmjs.org
+          # Do not set registry-url here — it writes NODE_AUTH_TOKEN to .npmrc and
+          # blocks npm Trusted Publishing (OIDC), which surfaces as misleading E404.
 
       - name: Install trusted-publishing npm CLI
         run: npm install --global "npm@${NPM_CLI_VERSION}"
