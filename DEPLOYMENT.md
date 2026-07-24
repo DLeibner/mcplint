@@ -15,7 +15,7 @@ the remote server metadata to the official MCP Registry. A failure stops every d
 3. **Publish npm** — publish the verified `mcp-surface-lint` tarball as public with GitHub OIDC and npm
    provenance. If that exact immutable version already exists, a rerun skips it.
 4. **Publish MCP Registry metadata** — revalidate the rendered `server.json` artifact, authenticate
-   the `io.github.dleibner` namespace with GitHub OIDC, and publish that exact artifact. An existing
+   the `io.github.DLeibner` namespace with GitHub OIDC, and publish that exact artifact. An existing
    exact version is skipped, so reruns never overwrite registry metadata.
 
 The npm and MCP Registry jobs cannot run until the production deployment and its `/`, `/install`,
@@ -153,8 +153,8 @@ public access, and provenance. Do not store an npm token in GitHub.
 ## One-time MCP Registry setup
 
 No Registry secret is required. The official Registry supports GitHub Actions OIDC for the personal
-`io.github.dleibner/*` namespace. The repository owner must be the `DLeibner` GitHub account; the
-namespace comparison is case-normalized. The workflow uses the checksum-verified
+`io.github.DLeibner/*` namespace. The repository owner must be the `DLeibner` GitHub account; the
+registry `name` must use that exact casing (GitHub OIDC permissions are case-sensitive). The workflow uses the checksum-verified
 `mcp-publisher` v1.8.0 binary and runs:
 
 ```bash
@@ -242,5 +242,5 @@ npx mcp-surface-lint@<version> /path/to/a-sanitised-snapshot.json
 ```
 
 Also confirm the npm package page shows provenance, the Vercel production alias targets the new
-deployment, and the exact `io.github.dleibner/mcplint` version appears in the official MCP Registry.
+deployment, and the exact `io.github.DLeibner/mcplint` version appears in the official MCP Registry.
 Do not announce a release until all three external systems agree.

@@ -19,7 +19,7 @@ describe("server.json", () => {
     expect(metadata.$schema).toBe(
       "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
     );
-    expect(metadata.name).toMatch(/^[a-zA-Z0-9.-]+\/[a-zA-Z0-9._-]+$/);
+    expect(metadata.name).toBe("io.github.DLeibner/mcplint");
     expect(metadata.description.length).toBeGreaterThan(0);
     expect(metadata.description.length).toBeLessThanOrEqual(100);
     expect(metadata.version).toMatch(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
