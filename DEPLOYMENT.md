@@ -23,14 +23,14 @@ The npm and MCP Registry jobs cannot run until the production deployment and its
 
 ## One-time GitHub setup
 
-Create a GitHub Environment named exactly `production` in `DLeibner/mcplint`:
+Create a GitHub Environment named exactly `Production` in `DLeibner/mcp-surface-lint`:
 
 - Add a required reviewer.
 - Prevent self-review if another maintainer is available.
 - Restrict deployment tags to `*.*.*` (bare semver tags such as `0.1.1`, not `v0.1.1`).
 - Keep the `main` branch protected and require CI before release commits are pushed.
 
-Add these **Environment secrets** to `production` (not repository variables and never committed):
+Add these **Environment secrets** to `Production` (not repository variables and never committed):
 
 | Name | Value |
 | --- | --- |
@@ -61,7 +61,7 @@ npx vercel@56.3.2 link --repo
 cat .vercel/project.json
 ```
 
-Select the `DLeibner/mcplint` repository and the web project. `.vercel/project.json` supplies
+Select the `DLeibner/mcp-surface-lint` repository and the web project. `.vercel/project.json` supplies
 `orgId` and `projectId`; copy those values to the GitHub Environment secrets above. `.vercel/` is
 gitignored and must stay uncommitted.
 
@@ -141,9 +141,9 @@ Then open the `mcp-surface-lint` package settings on npmjs.com and configure its
 
 - Provider: GitHub Actions
 - Organization or user: `DLeibner`
-- Repository: `mcplint`
+- Repository: `mcp-surface-lint`
 - Workflow filename: `release.yml` — filename only, exact case, including `.yml`
-- Environment: `production` — exact case
+- Environment: `Production` — exact case (must match the GitHub Environment name)
 - Allowed action: `npm publish`
 
 Trusted Publisher configuration must point to the exact workflow filename and Environment or OIDC
