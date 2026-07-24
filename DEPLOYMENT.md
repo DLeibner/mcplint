@@ -242,5 +242,19 @@ npx mcp-surface-lint@<version> /path/to/a-sanitised-snapshot.json
 ```
 
 Also confirm the npm package page shows provenance, the Vercel production alias targets the new
-deployment, and the exact `io.github.DLeibner/mcplint` version appears in the official MCP Registry.
+deployment, and the exact `io.github.DLeibner/mcp-surface-lint` version appears in the official MCP Registry.
 Do not announce a release until all three external systems agree.
+
+### Registry server id (`name`)
+
+The MCP Registry treats `server.json` `name` as a stable server id (for example
+`io.github.DLeibner/mcp-surface-lint`). Changing `name` publishes under a **new** id; it does not
+rename or replace an existing listing. Published versions are immutable, so reruns skip an id/version
+pair that already exists.
+
+If you previously published under a different id (such as `io.github.DLeibner/mcplint`), that entry
+can remain visible alongside the new one until the Registry offers an official delete, deprecate, or
+redirect workflow. This repo does not automate that step — check the current
+[Model Context Protocol Registry](https://github.com/modelcontextprotocol/registry) documentation or
+support channels for what is available in preview. Keep `name` aligned with npm (`mcp-surface-lint`)
+and the GitHub repo; keep `DLeibner` casing exactly as shown for GitHub OIDC.

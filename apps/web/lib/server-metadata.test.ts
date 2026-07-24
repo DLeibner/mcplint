@@ -19,7 +19,8 @@ describe("server.json", () => {
     expect(metadata.$schema).toBe(
       "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json"
     );
-    expect(metadata.name).toBe("io.github.DLeibner/mcplint");
+    expect(metadata.name).toBe("io.github.DLeibner/mcp-surface-lint");
+    expect(metadata.title).toBe("MCP Surface Lint");
     expect(metadata.description.length).toBeGreaterThan(0);
     expect(metadata.description.length).toBeLessThanOrEqual(100);
     expect(metadata.version).toMatch(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
