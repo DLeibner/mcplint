@@ -114,7 +114,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "Description contains 3 client-directive sentence(s) (~34 tokens) about rendering or other tools, duplicated across multiple tools — move shared guidance to one server-level place.",
       "evidence": "IMPORTANT: RENDER RESULTS IMMEDIATELY. Always display the map widget and format every widget link as markdown. Do not call get_widget after this tool returns.",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/client-directives",
@@ -123,7 +123,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "Description contains 3 client-directive sentence(s) (~34 tokens) about rendering or other tools, duplicated across multiple tools — move shared guidance to one server-level place.",
       "evidence": "IMPORTANT: RENDER RESULTS IMMEDIATELY. Always display the map widget and format every widget link as markdown. Do not call get_widget after this tool returns.",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/client-directives",
@@ -132,7 +132,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "Description contains 3 client-directive sentence(s) (~34 tokens) about rendering or other tools, duplicated across multiple tools — move shared guidance to one server-level place.",
       "evidence": "IMPORTANT: RENDER RESULTS IMMEDIATELY. Always display the map widget and format every widget link as markdown. Do not call get_widget after this tool returns.",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/confusable-params",
@@ -140,7 +140,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "\\"widget_id\\" (get_widget, get_widget_images, get_widget_reviews, create_record) vs \\"widgetId\\" (get_record)",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/crud-mirror",
@@ -148,7 +148,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "create_record, get_record, list_records, update_record, delete_record",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/crud-mirror",
@@ -156,7 +156,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "create_entry, get_entry, update_entry, delete_entry",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/duplicate-leading-words",
@@ -164,7 +164,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "search_widgets, search_widgets_by_text, search_widgets_nearby — \\"important render results immediately always display the map widget and format every widget link as…\\"",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/enum-in-prose",
@@ -174,7 +174,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "Sort order. One of: relevance, price, rating.",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/list-no-limit",
@@ -182,7 +182,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "\\"search_widgets_by_text\\" implies list/search output but has no limit or pagination parameter — result size is unbounded.",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/list-no-limit",
@@ -190,7 +190,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "\\"search_widgets_nearby\\" implies list/search output but has no limit or pagination parameter — result size is unbounded.",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/list-no-limit",
@@ -198,7 +198,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "\\"list_records\\" implies list/search output but has no limit or pagination parameter — result size is unbounded.",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/list-no-limit",
@@ -206,7 +206,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "\\"list_entries\\" implies list/search output but has no limit or pagination parameter — result size is unbounded.",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/overlap-cluster",
@@ -214,7 +214,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "search_widgets, search_widgets_by_text, search_widgets_nearby",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/overlap-cluster",
@@ -222,7 +222,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "get_widget, get_widget_images, get_widget_reviews",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/overlap-cluster",
@@ -230,7 +230,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "search_widgets, search_widgets_by_text, search_widgets_nearby",
       "severity": "warn",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "naming/convention",
@@ -255,7 +255,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "message": "Input schema nests 4 levels deep (budget 3).",
       "severity": "warn",
       "category": "schemas",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "schemas/loose",
@@ -372,7 +372,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "shared_enum_a/properties/tier; shared_enum_b/properties/tier",
       "severity": "info",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     },
     {
       "ruleId": "design/negative-guidance-present",
@@ -382,7 +382,7 @@ exports[`golden reports > bad-server trips every seeded rule 1`] = `
       "evidence": "Only call when the user explicitly asks for details about a specific widget.",
       "severity": "info",
       "category": "design",
-      "docsUrl": "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md"
+      "docsUrl": "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md"
     }
   ]
 }"

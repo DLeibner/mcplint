@@ -11,7 +11,7 @@ export class Docs {
    */
   static readonly base =
     process.env.MCPLINT_DOCS_BASE ??
-    "https://github.com/DLeibner/mcplint/blob/main/packages/core/docs/rules.md";
+    "https://github.com/DLeibner/mcp-surface-lint/blob/main/packages/core/docs/rules.md";
 
   /** `design/crud-mirror` -> `design-crud-mirror` */
   static slug(id: string): string {

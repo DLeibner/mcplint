@@ -24,7 +24,7 @@ describe("server.json", () => {
     expect(metadata.description.length).toBeLessThanOrEqual(100);
     expect(metadata.version).toMatch(/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
     expect(metadata.repository).toMatchObject({
-      url: "https://github.com/DLeibner/mcplint",
+      url: "https://github.com/DLeibner/mcp-surface-lint",
       source: "github",
       subfolder: "apps/web"
     });

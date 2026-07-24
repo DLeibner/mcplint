@@ -6,7 +6,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DLeibner/mcplint.git",
+    "url": "git+https://github.com/DLeibner/mcp-surface-lint.git",
     "directory": "packages/core"
   },
   "bin": {
